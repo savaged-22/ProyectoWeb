@@ -1,0 +1,6 @@
+package com.lulo.pool.pool.dto;
+
+public record PoolDto(
+    Long id
+    // TODO: campos
+) {}

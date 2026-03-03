@@ -1,0 +1,15 @@
+package com.lulo.diagram/arc.arc.model;
+
+import jakarta.persistence.*;
+
+@Entity
+public class Arc {
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
+
+  // TODO: campos
+
+  public Long getId() { return id; }
+  public void setId(Long id) { this.id = id; }
+}

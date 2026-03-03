@@ -1,0 +1,10 @@
+package com.lulo.integration.integration.controller;
+
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/integration")
+public class IntegrationController {
+  // TODO: endpoints
+}

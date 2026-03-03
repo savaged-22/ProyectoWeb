@@ -1,0 +1,8 @@
+package com.lulo.sharing.sharing.service;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class SharingService {
+  // TODO: lógica de negocio
+}

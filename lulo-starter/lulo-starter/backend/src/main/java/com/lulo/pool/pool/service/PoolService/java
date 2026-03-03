@@ -1,0 +1,8 @@
+package com.lulo.pool.pool.service;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class PoolService {
+  // TODO: lógica de negocio
+}

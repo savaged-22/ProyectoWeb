@@ -1,0 +1,6 @@
+package com.lulo.sharing.sharing.dto;
+
+public record SharingDto(
+    Long id
+    // TODO: campos
+) {}

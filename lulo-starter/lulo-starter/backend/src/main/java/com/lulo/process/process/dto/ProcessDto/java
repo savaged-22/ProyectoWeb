@@ -1,0 +1,6 @@
+package com.lulo.process.process.dto;
+
+public record ProcessDto(
+    Long id
+    // TODO: campos
+) {}

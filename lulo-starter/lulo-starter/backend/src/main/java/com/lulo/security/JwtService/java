@@ -1,0 +1,11 @@
+package com.lulo.security;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class JwtService {
+  // TODO: implementar JWT real (jjwt o similar)
+  public String generateToken(String subject) {
+    return "DUMMY_TOKEN_FOR_" + subject;
+  }
+}

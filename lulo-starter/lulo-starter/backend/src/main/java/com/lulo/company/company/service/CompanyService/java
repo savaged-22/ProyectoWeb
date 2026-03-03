@@ -1,0 +1,8 @@
+package com.lulo.company.company.service;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class CompanyService {
+  // TODO: lógica de negocio
+}

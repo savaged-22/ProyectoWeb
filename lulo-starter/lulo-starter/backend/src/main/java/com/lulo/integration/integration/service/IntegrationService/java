@@ -1,0 +1,8 @@
+package com.lulo.integration.integration.service;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class IntegrationService {
+  // TODO: lógica de negocio
+}

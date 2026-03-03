@@ -1,0 +1,8 @@
+package com.lulo.diagram/arc.arc.service;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class ArcService {
+  // TODO: lógica de negocio
+}

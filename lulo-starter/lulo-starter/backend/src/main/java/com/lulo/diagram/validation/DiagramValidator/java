@@ -1,0 +1,8 @@
+package com.lulo.diagram.validation;
+
+import org.springframework.stereotype.Component;
+
+@Component
+public class DiagramValidator {
+  // TODO: reglas de consistencia del diagrama
+}

@@ -1,0 +1,6 @@
+package com.lulo.company.company.repository;
+
+import com.lulo.company.company.model.Company;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface CompanyRepository extends JpaRepository<Company, Long> {}
