@@ -1,7 +1,7 @@
 # Visor y Editor de Procesos Empresariales LULO
 
 ## Descripción
-Este proyecto consiste en el desarrollo de un **visor y editor de procesos empresariales**. Su objetivo es permitir la **visualización y edición** de procesos asociados a una empresa, garantizando la **separación de información entre organizaciones** 
+Este proyecto consiste en el desarrollo de un **visor y editor de procesos empresariales**. Su objetivo es permitir la **visualización y edición** de procesos asociados a una empresa, garantizando la **separación de información entre organizaciones**
 
 Cada empresa contará con sus **propios usuarios**, y los procesos creados o gestionados serán **exclusivos** de la empresa del usuario autenticado.
 
