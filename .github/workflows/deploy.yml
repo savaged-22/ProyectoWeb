@@ -1,96 +1,72 @@
-name: Build and Deploy ProyectoWeb
+name: Build and Deploy with MicroK8s (ProyectoWeb)
 
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch:
+    branches: [main]
 
 env:
   REGISTRY: ghcr.io
-  # Replace with your actual GitHub username/repo
-  IMAGE_BACKEND: ${{ github.repository_owner }}/proyectoweb-backend
-  IMAGE_FRONTEND: ${{ github.repository_owner }}/proyectoweb-frontend
+  # Ajustar estos nombres según sea necesario
+  IMAGE_BACKEND: proyectoweb-backend
+  IMAGE_FRONTEND: proyectoweb-frontend
   K8S_NAMESPACE: grupo12
 
-permissions:
-  contents: read
-  packages: write
-
 jobs:
-  build-and-push-backend:
+  build-and-publish:
+    name: Build and Push Images to GHCR
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+    - name: Set OWNER_LC
+      run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Log in to GHCR
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Backend
-        uses: docker/build-push-action@v6
-        with:
-          context: ./lulo-starter/backend
-          file: ./lulo-starter/backend/Dockerfile
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_BACKEND }}:latest,${{ env.REGISTRY }}/${{ env.IMAGE_BACKEND }}:${{ github.sha }}
+    - name: Build and Push Backend
+      run: |
+        docker build -t ${{ env.REGISTRY }}/${OWNER_LC}/${{ env.IMAGE_BACKEND }}:latest ./lulo-starter/backend
+        docker push ${{ env.REGISTRY }}/${OWNER_LC}/${{ env.IMAGE_BACKEND }}:latest
 
-  build-and-push-frontend:
-    runs-on: ubuntu-latest
+    - name: Build and Push Frontend
+      run: |
+        docker build -t ${{ env.REGISTRY }}/${OWNER_LC}/${{ env.IMAGE_FRONTEND }}:latest ./lulo-starter/frontend
+        docker push ${{ env.REGISTRY }}/${OWNER_LC}/${{ env.IMAGE_FRONTEND }}:latest
+
+  deploy-onpremise:
+    name: Deploy on MicroK8s On-Premise
+    # 'runs-on: main' sugiere que tienes un runner propio (self-hosted) configurado con ese label. 
+    # Si quieres usar los corredores de GitHub estándar, usa 'ubuntu-latest', pero
+    # para ejecutar comandos 'microk8s kubectl' locales se requiere el runner self-hosted.
+    runs-on: main 
+    needs: build-and-publish
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - name: Checkout repo
+      uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+    - name: Set OWNER_LC
+      run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Apply Kubernetes deployment
+      run: |
+        # Reemplazamos las etiquetas de imagen en el archivo de despliegue antes de aplicar
+        BACKEND_IMG="${{ env.REGISTRY }}/${OWNER_LC}/${{ env.IMAGE_BACKEND }}:latest"
+        FRONTEND_IMG="${{ env.REGISTRY }}/${OWNER_LC}/${{ env.IMAGE_FRONTEND }}:latest"
+        
+        sed "s|proyectoweb-backend:latest|$BACKEND_IMG|g; s|proyectoweb-frontend:latest|$FRONTEND_IMG|g" deployment.yaml | sudo microk8s kubectl apply -f -
 
-      # Step to handle the missing package.json for now - or a basic build
-      - name: Build and push Frontend
-        uses: docker/build-push-action@v6
-        with:
-          context: ./lulo-starter/frontend
-          # We expect a Dockerfile here as well
-          file: ./lulo-starter/frontend/Dockerfile
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_FRONTEND }}:latest,${{ env.REGISTRY }}/${{ env.IMAGE_FRONTEND }}:${{ github.sha }}
-
-  deploy:
-    needs: [build-and-push-backend, build-and-push-frontend]
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install kubectl
-        uses: azure/setup-kubectl@v4
-        with:
-          version: v1.30.0
-
-      - name: Configure kubeconfig
-        run: |
-          mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
-
-      - name: Deployment with Helm or Manifests
-        run: |
-          # We replace placeholder images in deployment.yaml
-          BACKEND_IMG="${{ env.REGISTRY }}/${{ env.IMAGE_BACKEND }}:latest"
-          FRONTEND_IMG="${{ env.REGISTRY }}/${{ env.IMAGE_FRONTEND }}:latest"
-          
-          sed "s|proyectoweb-backend:latest|$BACKEND_IMG|g; s|proyectoweb-frontend:latest|$FRONTEND_IMG|g" deployment.yaml | kubectl apply -f -
+    - name: Restart Kubernetes deployment
+      run: |
+        sudo microk8s kubectl rollout restart deployment/proyectoweb-backend -n ${{ env.K8S_NAMESPACE }}
+        sudo microk8s kubectl rollout restart deployment/proyectoweb-frontend -n ${{ env.K8S_NAMESPACE }}
