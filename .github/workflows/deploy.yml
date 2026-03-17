@@ -11,7 +11,7 @@ env:
   # Replace with your actual GitHub username/repo
   IMAGE_BACKEND: ${{ github.repository_owner }}/proyectoweb-backend
   IMAGE_FRONTEND: ${{ github.repository_owner }}/proyectoweb-frontend
-  K8S_NAMESPACE: proyectoweb
+  K8S_NAMESPACE: grupo12
 
 permissions:
   contents: read
