@@ -1,0 +1,187 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: proyectoweb
+---
+# --- DATABASE (POSTGRESQL) ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-init-script
+  namespace: proyectoweb
+data:
+  init.sql: |
+    # Aquí iría el contenido de DataBase.sql (se puede configurar dinámicamente o copiar manualmente)
+    # Por ahora configuramos el montaje
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-secret
+  namespace: proyectoweb
+type: Opaque
+data:
+  # echo -n 'app' | base64 -> YXBw
+  postgres-password: YXBw
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: proyectoweb
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proyectoweb-db
+  namespace: proyectoweb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: proyectoweb-db
+  template:
+    metadata:
+      labels:
+        app: proyectoweb-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: lulo
+            - name: POSTGRES_USER
+              value: app
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: postgres-password
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+            - name: init-script
+              mountPath: /docker-entrypoint-initdb.d
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+        - name: init-script
+          configMap:
+            name: db-init-script
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: proyectoweb-db-service
+  namespace: proyectoweb
+spec:
+  selector:
+    app: proyectoweb-db
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+  type: ClusterIP
+
+---
+# --- BACKEND (JAVA/SPRING BOOT) ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proyectoweb-backend
+  namespace: proyectoweb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: proyectoweb-backend
+  template:
+    metadata:
+      labels:
+        app: proyectoweb-backend
+    spec:
+      containers:
+        - name: proyectoweb-backend
+          image: proyectoweb-backend:latest # Reemplazar con la imagen real
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://proyectoweb-db-service:5432/lulo
+            - name: SPRING_DATASOURCE_USERNAME
+              value: app
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: postgres-password
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: update
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: proyectoweb-backend-service
+  namespace: proyectoweb
+spec:
+  selector:
+    app: proyectoweb-backend
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
+
+---
+# --- FRONTEND ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proyectoweb-frontend
+  namespace: proyectoweb
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: proyectoweb-frontend
+  template:
+    metadata:
+      labels:
+        app: proyectoweb-frontend
+    spec:
+      containers:
+        - name: proyectoweb-frontend
+          image: proyectoweb-frontend:latest # Reemplazar con la imagen real
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: proyectoweb-frontend-service
+  namespace: proyectoweb
+spec:
+  selector:
+    app: proyectoweb-frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: LoadBalancer
