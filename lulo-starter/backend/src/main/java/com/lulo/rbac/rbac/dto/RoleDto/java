@@ -1,6 +1,0 @@
-package com.lulo.rbac.rbac.dto;
-
-public record RoleDto(
-    Long id
-    // TODO: campos
-) {}

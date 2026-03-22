@@ -1,6 +1,0 @@
-package com.lulo.process.process.repository;
-
-import com.lulo.process.process.model.Process;
-import org.springframework.data.jpa.repository.JpaRepository;
-
-public interface ProcessRepository extends JpaRepository<Process, Long> {}

@@ -1,6 +1,0 @@
-package com.lulo.company.company.dto;
-
-public record CompanyDto(
-    Long id
-    // TODO: campos
-) {}

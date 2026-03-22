@@ -1,6 +1,0 @@
-package com.lulo.diagram/activity.activity.dto;
-
-public record ActivityDto(
-    Long id
-    // TODO: campos
-) {}

@@ -1,8 +1,0 @@
-package com.lulo.users.users.service;
-
-import org.springframework.stereotype.Service;
-
-@Service
-public class UserService {
-  // TODO: lógica de negocio
-}

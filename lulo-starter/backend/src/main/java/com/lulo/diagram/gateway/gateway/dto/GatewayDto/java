@@ -1,6 +1,0 @@
-package com.lulo.diagram/gateway.gateway.dto;
-
-public record GatewayDto(
-    Long id
-    // TODO: campos
-) {}

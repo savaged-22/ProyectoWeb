@@ -1,6 +1,0 @@
-package com.lulo.users.users.dto;
-
-public record UserDto(
-    Long id
-    // TODO: campos
-) {}

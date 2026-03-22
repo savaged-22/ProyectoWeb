@@ -1,0 +1,241 @@
+package com.lulo.process;
+
+import com.lulo.audit.AuditService;
+import com.lulo.common.exception.ApiException;
+import com.lulo.company.EmpresaRepository;
+import com.lulo.diagram.DiagramService;
+import com.lulo.pool.Pool;
+import com.lulo.pool.PoolRepository;
+import com.lulo.process.dto.CrearProcesoRequest;
+import com.lulo.process.dto.EditarProcesoRequest;
+import com.lulo.process.dto.EliminarProcesoRequest;
+import com.lulo.process.dto.ProcesoDetalleResponse;
+import com.lulo.process.dto.ProcesoResponse;
+import com.lulo.users.Usuario;
+import com.lulo.users.UsuarioRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+@Service
+@RequiredArgsConstructor
+public class ProcesoService {
+
+    private final ProcesoRepository  procesoRepository;
+    private final EmpresaRepository  empresaRepository;
+    private final PoolRepository     poolRepository;
+    private final UsuarioRepository  usuarioRepository;
+    private final AuditService       auditService;
+    private final DiagramService     diagramService;
+
+    // ── Listar con filtros ────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public Page<ProcesoResponse> listar(Integer empresaId,
+                                        String estado,
+                                        String categoria,
+                                        String nombre,
+                                        Pageable pageable) {
+        Specification<Proceso> spec = Specification
+                .where(ProcesoSpec.activos())
+                .and(ProcesoSpec.deEmpresa(empresaId));
+
+        if (estado    != null) spec = spec.and(ProcesoSpec.conEstado(estado));
+        if (categoria != null) spec = spec.and(ProcesoSpec.conCategoria(categoria));
+        if (nombre    != null) spec = spec.and(ProcesoSpec.nombreContiene(nombre));
+
+        return procesoRepository.findAll(spec, pageable).map(ProcesoService::toResponse);
+    }
+
+    // ── Obtener detalle con diagrama ──────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public ProcesoDetalleResponse obtener(Integer procesoId, Integer empresaId) {
+
+        Proceso proceso = procesoRepository.findByIdAndActivoTrue(procesoId)
+                .orElseThrow(() -> new ApiException("Proceso no encontrado", HttpStatus.NOT_FOUND));
+
+        if (!proceso.getEmpresa().getId().equals(empresaId)) {
+            throw new ApiException("El proceso no pertenece a esta empresa", HttpStatus.FORBIDDEN);
+        }
+
+        return ProcesoDetalleResponse.builder()
+                .id(proceso.getId())
+                .empresaId(proceso.getEmpresa().getId())
+                .empresaNombre(proceso.getEmpresa().getNombre())
+                .poolId(proceso.getPool().getId())
+                .poolNombre(proceso.getPool().getNombre())
+                .creadoPorId(proceso.getCreatedByUser().getId())
+                .creadoPorEmail(proceso.getCreatedByUser().getEmail())
+                .nombre(proceso.getNombre())
+                .descripcion(proceso.getDescripcion())
+                .categoria(proceso.getCategoria())
+                .estado(proceso.getEstado())
+                .activo(proceso.isActivo())
+                .createdAt(proceso.getCreatedAt())
+                .updatedAt(proceso.getUpdatedAt())
+                .lanes(diagramService.getLanes(procesoId))
+                .nodos(diagramService.getNodos(procesoId))
+                .arcos(diagramService.getArcos(procesoId))
+                .build();
+    }
+
+    // ── Crear ─────────────────────────────────────────────────────────────────
+
+    @Transactional
+    public ProcesoResponse crear(CrearProcesoRequest request) {
+
+        var empresa = empresaRepository.findById(request.getEmpresaId())
+                .orElseThrow(() -> new ApiException("Empresa no encontrada", HttpStatus.NOT_FOUND));
+
+        Pool pool = poolRepository.findById(request.getPoolId())
+                .orElseThrow(() -> new ApiException("Pool no encontrado", HttpStatus.NOT_FOUND));
+
+        // El pool debe pertenecer a la empresa
+        if (!pool.getEmpresa().getId().equals(request.getEmpresaId())) {
+            throw new ApiException("El pool no pertenece a esta empresa", HttpStatus.FORBIDDEN);
+        }
+
+        Usuario creadoPor = usuarioRepository.findById(request.getCreadoPorId())
+                .orElseThrow(() -> new ApiException("Usuario no encontrado", HttpStatus.NOT_FOUND));
+
+        // El usuario debe pertenecer a la empresa
+        if (!creadoPor.getEmpresa().getId().equals(request.getEmpresaId())) {
+            throw new ApiException("El usuario no pertenece a esta empresa", HttpStatus.FORBIDDEN);
+        }
+
+        String estado = request.getEstado() != null ? request.getEstado() : "borrador";
+
+        Proceso proceso = new Proceso();
+        proceso.setEmpresa(empresa);
+        proceso.setPool(pool);
+        proceso.setCreatedByUser(creadoPor);
+        proceso.setNombre(request.getNombre());
+        proceso.setDescripcion(request.getDescripcion());
+        proceso.setCategoria(request.getCategoria());
+        proceso.setEstado(estado);
+        proceso.setActivo(true);
+        proceso = procesoRepository.save(proceso);
+
+        return toResponse(proceso);
+    }
+
+    // ── Editar ───────────────────────────────────────────────────────────────
+
+    @Transactional
+    public ProcesoResponse editar(Integer procesoId, EditarProcesoRequest request) {
+
+        Proceso proceso = procesoRepository.findByIdAndActivoTrue(procesoId)
+                .orElseThrow(() -> new ApiException("Proceso no encontrado", HttpStatus.NOT_FOUND));
+
+        Usuario editadoPor = usuarioRepository.findById(request.getEditadoPorId())
+                .orElseThrow(() -> new ApiException("Usuario no encontrado", HttpStatus.NOT_FOUND));
+
+        // El usuario debe pertenecer a la misma empresa que el proceso
+        if (!editadoPor.getEmpresa().getId().equals(proceso.getEmpresa().getId())) {
+            throw new ApiException("El usuario no pertenece a esta empresa", HttpStatus.FORBIDDEN);
+        }
+
+        // TODO: verificar permiso PROCESO_EDITAR del usuario en el pool (HU-Auth)
+
+        // ── Snapshot antes del cambio ─────────────────────────────────────────
+        Map<String, Object> antes = snapshot(proceso);
+
+        // ── Aplicar solo los campos presentes en el request ───────────────────
+        if (request.getNombre()      != null) proceso.setNombre(request.getNombre());
+        if (request.getDescripcion() != null) proceso.setDescripcion(request.getDescripcion());
+        if (request.getCategoria()   != null) proceso.setCategoria(request.getCategoria());
+        if (request.getEstado()      != null) proceso.setEstado(request.getEstado());
+
+        // saveAndFlush fuerza el flush inmediato para que @PreUpdate dispare
+        // antes de construir el response (evita updatedAt null en la respuesta)
+        proceso = procesoRepository.saveAndFlush(proceso);
+
+        // ── Registrar historial ───────────────────────────────────────────────
+        auditService.registrar(
+                proceso.getEmpresa(),
+                editadoPor,
+                "PROCESO",
+                proceso.getId(),
+                "EDITAR",
+                antes,
+                snapshot(proceso)
+        );
+
+        return toResponse(proceso);
+    }
+
+    // ── Archivar (soft delete) ────────────────────────────────────────────────
+
+    @Transactional
+    public void archivar(Integer procesoId, EliminarProcesoRequest request) {
+
+        Proceso proceso = procesoRepository.findByIdAndActivoTrue(procesoId)
+                .orElseThrow(() -> new ApiException("Proceso no encontrado", HttpStatus.NOT_FOUND));
+
+        Usuario eliminadoPor = usuarioRepository.findById(request.getEliminadoPorId())
+                .orElseThrow(() -> new ApiException("Usuario no encontrado", HttpStatus.NOT_FOUND));
+
+        // El usuario debe pertenecer a la misma empresa que el proceso
+        if (!eliminadoPor.getEmpresa().getId().equals(proceso.getEmpresa().getId())) {
+            throw new ApiException("El usuario no pertenece a esta empresa", HttpStatus.FORBIDDEN);
+        }
+
+        // TODO: verificar permiso PROCESO_ELIMINAR del usuario en el pool (HU-Auth)
+
+        Map<String, Object> antes = snapshot(proceso);
+
+        // Soft delete: el proceso queda en BD para trazabilidad
+        proceso.setActivo(false);
+        procesoRepository.save(proceso);
+
+        auditService.registrar(
+                proceso.getEmpresa(),
+                eliminadoPor,
+                "PROCESO",
+                proceso.getId(),
+                "ARCHIVAR",
+                antes,
+                snapshot(proceso)
+        );
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private Map<String, Object> snapshot(Proceso p) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("nombre",      p.getNombre());
+        m.put("descripcion", p.getDescripcion());
+        m.put("categoria",   p.getCategoria());
+        m.put("estado",      p.getEstado());
+        return m;
+    }
+
+    // ── Mapper ────────────────────────────────────────────────────────────────
+
+    static ProcesoResponse toResponse(Proceso p) {
+        return ProcesoResponse.builder()
+                .id(p.getId())
+                .empresaId(p.getEmpresa().getId())
+                .empresaNombre(p.getEmpresa().getNombre())
+                .poolId(p.getPool().getId())
+                .poolNombre(p.getPool().getNombre())
+                .creadoPorId(p.getCreatedByUser().getId())
+                .creadoPorEmail(p.getCreatedByUser().getEmail())
+                .nombre(p.getNombre())
+                .descripcion(p.getDescripcion())
+                .categoria(p.getCategoria())
+                .estado(p.getEstado())
+                .activo(p.isActivo())
+                .createdAt(p.getCreatedAt())
+                .updatedAt(p.getUpdatedAt())
+                .build();
+    }
+}

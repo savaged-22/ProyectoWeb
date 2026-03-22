@@ -1,6 +1,0 @@
-package com.lulo.integration.integration.dto;
-
-public record IntegrationDto(
-    Long id
-    // TODO: campos
-) {}

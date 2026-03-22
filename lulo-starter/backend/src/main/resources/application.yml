@@ -1,21 +1,21 @@
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
 
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:lulo;DB_CLOSE_DELAY=-1;MODE=PostgreSQL}
-    # driverClassName: org.h2.Driver (Spring Boot lo detectará automáticamente)
-    username: ${SPRING_DATASOURCE_USERNAME:sa}
-    password: ${SPRING_DATASOURCE_PASSWORD:}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
   jpa:
     hibernate:
       ddl-auto: validate
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-  h2:
-    console:
-      enabled: true
+    show-sql: false
 
   flyway:
     enabled: true
@@ -23,5 +23,5 @@ spring:
 
 app:
   jwt:
-    secret: "CHANGE_ME_SUPER_SECRET"
-    expirationMinutes: 120
+    secret: ${JWT_SECRET}
+    expirationMinutes: ${JWT_EXPIRATION_MINUTES:120}

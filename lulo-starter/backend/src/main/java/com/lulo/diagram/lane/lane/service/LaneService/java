@@ -1,8 +1,0 @@
-package com.lulo.diagram/lane.lane.service;
-
-import org.springframework.stereotype.Service;
-
-@Service
-public class LaneService {
-  // TODO: lógica de negocio
-}

@@ -1,8 +1,0 @@
-package com.lulo.rbac.rbac.service;
-
-import org.springframework.stereotype.Service;
-
-@Service
-public class RoleService {
-  // TODO: lógica de negocio
-}

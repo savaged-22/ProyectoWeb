@@ -1,6 +1,0 @@
-package com.lulo.diagram/arc.arc.dto;
-
-public record ArcDto(
-    Long id
-    // TODO: campos
-) {}

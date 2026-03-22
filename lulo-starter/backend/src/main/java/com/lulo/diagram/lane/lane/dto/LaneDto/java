@@ -1,6 +1,0 @@
-package com.lulo.diagram/lane.lane.dto;
-
-public record LaneDto(
-    Long id
-    // TODO: campos
-) {}

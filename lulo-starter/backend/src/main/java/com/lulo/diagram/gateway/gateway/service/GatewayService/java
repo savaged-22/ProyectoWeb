@@ -1,8 +1,0 @@
-package com.lulo.diagram/gateway.gateway.service;
-
-import org.springframework.stereotype.Service;
-
-@Service
-public class GatewayService {
-  // TODO: lógica de negocio
-}

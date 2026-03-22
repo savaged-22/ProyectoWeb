@@ -1,8 +1,0 @@
-package com.lulo.process.process.service;
-
-import org.springframework.stereotype.Service;
-
-@Service
-public class ProcessService {
-  // TODO: lógica de negocio
-}
