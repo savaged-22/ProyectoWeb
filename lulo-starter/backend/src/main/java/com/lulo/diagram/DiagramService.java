@@ -9,8 +9,15 @@ import com.lulo.diagram.activity.dto.EditarActividadRequest;
 import com.lulo.diagram.activity.dto.EliminarActividadRequest;
 import com.lulo.diagram.arc.Arco;
 import com.lulo.diagram.arc.ArcoRepository;
+import com.lulo.diagram.arc.dto.CrearArcoRequest;
+import com.lulo.diagram.arc.dto.EditarArcoRequest;
+import com.lulo.diagram.arc.dto.EliminarArcoRequest;
 import com.lulo.diagram.arc.dto.ArcoResponse;
 import com.lulo.diagram.gateway.Gateway;
+import com.lulo.diagram.gateway.GatewayRepository;
+import com.lulo.diagram.gateway.dto.CrearGatewayRequest;
+import com.lulo.diagram.gateway.dto.EditarGatewayRequest;
+import com.lulo.diagram.gateway.dto.EliminarGatewayRequest;
 import com.lulo.diagram.lane.Lane;
 import com.lulo.diagram.lane.LaneRepository;
 import com.lulo.diagram.lane.dto.LaneResponse;
@@ -37,6 +44,7 @@ public class DiagramService {
     private final LaneRepository      laneRepository;
     private final NodoRepository      nodoRepository;
     private final ActividadRepository actividadRepository;
+    private final GatewayRepository   gatewayRepository;
     private final ArcoRepository      arcoRepository;
     private final UsuarioRepository   usuarioRepository;
     private final AuditService        auditService;
@@ -72,6 +80,40 @@ public class DiagramService {
         actividad = actividadRepository.save(actividad);
 
         return toNodoResponse(actividad);
+    }
+
+    // ── Crear gateway ────────────────────────────────────────────────────────
+
+    @Transactional
+    public NodoResponse crearGateway(Integer procesoId, CrearGatewayRequest request) {
+
+        Proceso proceso = requireProcesoActivo(procesoId);
+        var creadoPor = requireUsuarioDeEmpresa(request.getCreadoPorId(), proceso.getEmpresa().getId());
+        Lane lane = resolveLane(procesoId, request.getLaneId());
+
+        // TODO: verificar permiso DIAGRAMA_EDITAR del usuario en el pool (HU-Auth)
+
+        Gateway gateway = new Gateway();
+        gateway.setProceso(proceso);
+        gateway.setLane(lane);
+        gateway.setLabel(request.getLabel());
+        gateway.setPosX(request.getPosX());
+        gateway.setPosY(request.getPosY());
+        gateway.setTipoGateway(request.getTipoGateway());
+        gateway.setConfigJson(request.getConfigJson());
+        gateway = gatewayRepository.save(gateway);
+
+        auditService.registrar(
+                proceso.getEmpresa(),
+                creadoPor,
+                "GATEWAY",
+                gateway.getId(),
+                "CREAR",
+                null,
+                snapshotGateway(gateway)
+        );
+
+        return toNodoResponse(gateway);
     }
 
     // ── Editar actividad ──────────────────────────────────────────────────────
@@ -128,6 +170,44 @@ public class DiagramService {
         return toNodoResponse(actividad);
     }
 
+    // ── Editar gateway ───────────────────────────────────────────────────────
+
+    @Transactional
+    public NodoResponse editarGateway(Integer procesoId, Integer gatewayId,
+                                      EditarGatewayRequest request) {
+
+        Gateway gateway = gatewayRepository.findByIdAndProcesoId(gatewayId, procesoId)
+                .orElseThrow(() -> new ApiException("Gateway no encontrado", HttpStatus.NOT_FOUND));
+
+        var editadoPor = requireUsuarioDeEmpresa(request.getEditadoPorId(), gateway.getProceso().getEmpresa().getId());
+
+        // TODO: verificar permiso DIAGRAMA_EDITAR del usuario en el pool (HU-Auth)
+
+        Map<String, Object> antes = snapshotGateway(gateway);
+
+        if (request.getLabel() != null) gateway.setLabel(request.getLabel());
+        if (request.getPosX() != null) gateway.setPosX(request.getPosX());
+        if (request.getPosY() != null) gateway.setPosY(request.getPosY());
+        if (request.getTipoGateway() != null) gateway.setTipoGateway(request.getTipoGateway());
+        if (request.getConfigJson() != null) gateway.setConfigJson(request.getConfigJson());
+        if (request.getLaneId() != null) gateway.setLane(resolveLane(procesoId, request.getLaneId()));
+
+        validateGatewayOutgoingConsistency(gateway, gateway.getTipoGateway());
+        gateway = gatewayRepository.save(gateway);
+
+        auditService.registrar(
+                gateway.getProceso().getEmpresa(),
+                editadoPor,
+                "GATEWAY",
+                gateway.getId(),
+                "EDITAR",
+                antes,
+                snapshotGateway(gateway)
+        );
+
+        return toNodoResponse(gateway);
+    }
+
     // ── Eliminar actividad ────────────────────────────────────────────────────
 
     @Transactional
@@ -180,6 +260,156 @@ public class DiagramService {
         );
     }
 
+    // ── Eliminar gateway ─────────────────────────────────────────────────────
+
+    @Transactional
+    public void eliminarGateway(Integer procesoId, Integer gatewayId,
+                                EliminarGatewayRequest request) {
+
+        Gateway gateway = gatewayRepository.findByIdAndProcesoId(gatewayId, procesoId)
+                .orElseThrow(() -> new ApiException("Gateway no encontrado", HttpStatus.NOT_FOUND));
+
+        var eliminadoPor = requireUsuarioDeEmpresa(request.getEliminadoPorId(), gateway.getProceso().getEmpresa().getId());
+
+        // TODO: verificar permiso DIAGRAMA_EDITAR del usuario en el pool (HU-Auth)
+
+        List<Arco> arcosEntrantes = arcoRepository.findByToNodoIdAndActivoTrue(gatewayId);
+        List<Arco> arcosSalientes = arcoRepository.findByFromNodoIdAndActivoTrue(gatewayId);
+        if (!arcosEntrantes.isEmpty() || !arcosSalientes.isEmpty()) {
+            throw new ApiException(
+                    "No se puede eliminar el gateway mientras tenga arcos activos conectados",
+                    HttpStatus.CONFLICT);
+        }
+
+        Map<String, Object> antes = snapshotGateway(gateway);
+        gatewayRepository.delete(gateway);
+
+        auditService.registrar(
+                gateway.getProceso().getEmpresa(),
+                eliminadoPor,
+                "GATEWAY",
+                gatewayId,
+                "ELIMINAR",
+                antes,
+                null
+        );
+    }
+
+    // ── Crear arco ───────────────────────────────────────────────────────────
+
+    @Transactional
+    public ArcoResponse crearArco(Integer procesoId, CrearArcoRequest request) {
+
+        Proceso proceso = requireProcesoActivo(procesoId);
+        var creadoPor = requireUsuarioDeEmpresa(request.getCreadoPorId(), proceso.getEmpresa().getId());
+        Nodo fromNodo = requireNodoDiagramable(procesoId, request.getFromNodoId(), "origen");
+        Nodo toNodo = requireNodoDiagramable(procesoId, request.getToNodoId(), "destino");
+
+        validateArcoChange(null, procesoId, fromNodo, toNodo, request.getCondicionExpr());
+
+        // TODO: verificar permiso DIAGRAMA_EDITAR del usuario en el pool (HU-Auth)
+
+        Arco arco = new Arco();
+        arco.setProceso(proceso);
+        arco.setFromNodo(fromNodo);
+        arco.setToNodo(toNodo);
+        arco.setCondicionExpr(normalize(request.getCondicionExpr()));
+        arco.setPropsJson(request.getPropsJson());
+        arco = arcoRepository.save(arco);
+
+        auditService.registrar(
+                proceso.getEmpresa(),
+                creadoPor,
+                "ARCO",
+                arco.getId(),
+                "CREAR",
+                null,
+                snapshotArco(arco)
+        );
+
+        return toArcoResponse(arco);
+    }
+
+    // ── Editar arco ──────────────────────────────────────────────────────────
+
+    @Transactional
+    public ArcoResponse editarArco(Integer procesoId, Integer arcoId, EditarArcoRequest request) {
+
+        Arco arco = arcoRepository.findByIdAndActivoTrue(arcoId)
+                .orElseThrow(() -> new ApiException("Arco no encontrado", HttpStatus.NOT_FOUND));
+
+        if (!arco.getProceso().getId().equals(procesoId)) {
+            throw new ApiException("El arco no pertenece a este proceso", HttpStatus.FORBIDDEN);
+        }
+
+        var editadoPor = requireUsuarioDeEmpresa(request.getEditadoPorId(), arco.getProceso().getEmpresa().getId());
+
+        Nodo fromNodo = request.getFromNodoId() != null
+                ? requireNodoDiagramable(procesoId, request.getFromNodoId(), "origen")
+                : arco.getFromNodo();
+        Nodo toNodo = request.getToNodoId() != null
+                ? requireNodoDiagramable(procesoId, request.getToNodoId(), "destino")
+                : arco.getToNodo();
+        String condicionExpr = request.getCondicionExpr() != null
+                ? normalize(request.getCondicionExpr())
+                : arco.getCondicionExpr();
+
+        validateArcoChange(arco.getId(), procesoId, fromNodo, toNodo, condicionExpr);
+
+        // TODO: verificar permiso DIAGRAMA_EDITAR del usuario en el pool (HU-Auth)
+
+        Map<String, Object> antes = snapshotArco(arco);
+
+        arco.setFromNodo(fromNodo);
+        arco.setToNodo(toNodo);
+        arco.setCondicionExpr(condicionExpr);
+        if (request.getPropsJson() != null) arco.setPropsJson(request.getPropsJson());
+        arco = arcoRepository.save(arco);
+
+        auditService.registrar(
+                arco.getProceso().getEmpresa(),
+                editadoPor,
+                "ARCO",
+                arco.getId(),
+                "EDITAR",
+                antes,
+                snapshotArco(arco)
+        );
+
+        return toArcoResponse(arco);
+    }
+
+    // ── Eliminar arco ────────────────────────────────────────────────────────
+
+    @Transactional
+    public void eliminarArco(Integer procesoId, Integer arcoId, EliminarArcoRequest request) {
+
+        Arco arco = arcoRepository.findByIdAndActivoTrue(arcoId)
+                .orElseThrow(() -> new ApiException("Arco no encontrado", HttpStatus.NOT_FOUND));
+
+        if (!arco.getProceso().getId().equals(procesoId)) {
+            throw new ApiException("El arco no pertenece a este proceso", HttpStatus.FORBIDDEN);
+        }
+
+        var eliminadoPor = requireUsuarioDeEmpresa(request.getEliminadoPorId(), arco.getProceso().getEmpresa().getId());
+
+        // TODO: verificar permiso DIAGRAMA_EDITAR del usuario en el pool (HU-Auth)
+
+        Map<String, Object> antes = snapshotArco(arco);
+        arco.setActivo(false);
+        arcoRepository.save(arco);
+
+        auditService.registrar(
+                arco.getProceso().getEmpresa(),
+                eliminadoPor,
+                "ARCO",
+                arco.getId(),
+                "ELIMINAR",
+                antes,
+                snapshotArco(arco)
+        );
+    }
+
     // ── Consultas del diagrama ────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
@@ -217,6 +447,134 @@ public class DiagramService {
         m.put("posY",          a.getPosY());
         m.put("propsJson",     a.getPropsJson());
         return m;
+    }
+
+    private Map<String, Object> snapshotGateway(Gateway g) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("label",       g.getLabel());
+        m.put("tipoGateway", g.getTipoGateway());
+        m.put("laneId",      g.getLane() != null ? g.getLane().getId() : null);
+        m.put("posX",        g.getPosX());
+        m.put("posY",        g.getPosY());
+        m.put("configJson",  g.getConfigJson());
+        return m;
+    }
+
+    private Map<String, Object> snapshotArco(Arco a) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("fromNodoId",     a.getFromNodo().getId());
+        m.put("toNodoId",       a.getToNodo().getId());
+        m.put("condicionExpr",  a.getCondicionExpr());
+        m.put("propsJson",      a.getPropsJson());
+        m.put("activo",         a.isActivo());
+        return m;
+    }
+
+    private Proceso requireProcesoActivo(Integer procesoId) {
+        return procesoRepository.findByIdAndActivoTrue(procesoId)
+                .orElseThrow(() -> new ApiException("Proceso no encontrado", HttpStatus.NOT_FOUND));
+    }
+
+    private Lane resolveLane(Integer procesoId, Integer laneId) {
+        if (laneId == null) {
+            return null;
+        }
+
+        Lane lane = laneRepository.findById(laneId)
+                .orElseThrow(() -> new ApiException("Lane no encontrada", HttpStatus.NOT_FOUND));
+        if (!lane.getProceso().getId().equals(procesoId)) {
+            throw new ApiException("La lane no pertenece a este proceso", HttpStatus.FORBIDDEN);
+        }
+        return lane;
+    }
+
+    private Nodo requireNodoDiagramable(Integer procesoId, Integer nodoId, String etiqueta) {
+        Nodo nodo = nodoRepository.findById(nodoId)
+                .orElseThrow(() -> new ApiException("Nodo " + etiqueta + " no encontrado", HttpStatus.NOT_FOUND));
+
+        if (!nodo.getProceso().getId().equals(procesoId)) {
+            throw new ApiException("El nodo " + etiqueta + " no pertenece a este proceso", HttpStatus.FORBIDDEN);
+        }
+
+        if (!(nodo instanceof Actividad) && !(nodo instanceof Gateway)) {
+            throw new ApiException(
+                    "El nodo " + etiqueta + " debe ser una actividad o un gateway",
+                    HttpStatus.BAD_REQUEST);
+        }
+
+        return nodo;
+    }
+
+    private void validateArcoChange(Integer arcoId, Integer procesoId,
+                                    Nodo fromNodo, Nodo toNodo, String condicionExpr) {
+        if (fromNodo.getId().equals(toNodo.getId())) {
+            throw new ApiException("El nodo origen y destino no pueden ser el mismo", HttpStatus.BAD_REQUEST);
+        }
+
+        boolean duplicado = arcoId == null
+                ? arcoRepository.existsByProcesoIdAndFromNodoIdAndToNodoIdAndActivoTrue(
+                        procesoId, fromNodo.getId(), toNodo.getId())
+                : arcoRepository.existsActivoDuplicadoExcluyendoId(
+                        procesoId, fromNodo.getId(), toNodo.getId(), arcoId);
+        if (duplicado) {
+            throw new ApiException("Ya existe un arco activo con ese origen y destino", HttpStatus.CONFLICT);
+        }
+
+        validateOutgoingConditionRules(fromNodo, condicionExpr);
+    }
+
+    private void validateOutgoingConditionRules(Nodo fromNodo, String condicionExpr) {
+        String condicionNormalizada = normalize(condicionExpr);
+        if (fromNodo instanceof Gateway gateway) {
+            if ("paralelo".equals(gateway.getTipoGateway()) && condicionNormalizada != null) {
+                throw new ApiException(
+                        "Los arcos salientes de un gateway paralelo no pueden tener condición",
+                        HttpStatus.BAD_REQUEST);
+            }
+            return;
+        }
+
+        if (condicionNormalizada != null) {
+            throw new ApiException(
+                    "Solo los gateways exclusivos o inclusivos pueden definir condiciones de salida",
+                    HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    private void validateGatewayOutgoingConsistency(Gateway gateway, String tipoGateway) {
+        if (!"paralelo".equals(tipoGateway)) {
+            return;
+        }
+
+        boolean tieneCondiciones = arcoRepository.findByFromNodoIdAndActivoTrue(gateway.getId()).stream()
+                .map(Arco::getCondicionExpr)
+                .map(this::normalize)
+                .anyMatch(java.util.Objects::nonNull);
+
+        if (tieneCondiciones) {
+            throw new ApiException(
+                    "No se puede convertir el gateway a paralelo mientras existan arcos salientes con condición",
+                    HttpStatus.CONFLICT);
+        }
+    }
+
+    private com.lulo.users.Usuario requireUsuarioDeEmpresa(Integer usuarioId, Integer empresaId) {
+        var usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ApiException("Usuario no encontrado", HttpStatus.NOT_FOUND));
+
+        if (!usuario.getEmpresa().getId().equals(empresaId)) {
+            throw new ApiException("El usuario no pertenece a esta empresa", HttpStatus.FORBIDDEN);
+        }
+
+        return usuario;
+    }
+
+    private String normalize(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     // ── Mappers ───────────────────────────────────────────────────────────────

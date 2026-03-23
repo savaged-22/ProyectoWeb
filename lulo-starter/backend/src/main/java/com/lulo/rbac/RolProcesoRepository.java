@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface RolProcesoRepository extends JpaRepository<RolProceso, Integer> {
 
@@ -12,6 +13,22 @@ public interface RolProcesoRepository extends JpaRepository<RolProceso, Integer>
     List<RolProceso> findByActivo(boolean activo);
 
     boolean existsByEmpresaIdAndNombre(Integer empresaId, String nombre);
+
+    boolean existsByEmpresaIdAndNombreAndActivoTrue(Integer empresaId, String nombre);
+
+    Optional<RolProceso> findByIdAndActivoTrue(Integer id);
+
+    @Query("""
+            SELECT COUNT(r) > 0
+            FROM RolProceso r
+            WHERE r.empresa.id = :empresaId
+              AND r.nombre = :nombre
+              AND r.activo = true
+              AND r.id <> :rolProcesoId
+            """)
+    boolean existsActivoByEmpresaIdAndNombreExcluyendoId(@Param("empresaId") Integer empresaId,
+                                                         @Param("nombre") String nombre,
+                                                         @Param("rolProcesoId") Integer rolProcesoId);
 
     // Verifica si un rol está asignado a alguna lane antes de eliminarlo
     @Query("SELECT COUNT(l) > 0 FROM Lane l WHERE l.rolProceso.id = :rolProcesoId")
