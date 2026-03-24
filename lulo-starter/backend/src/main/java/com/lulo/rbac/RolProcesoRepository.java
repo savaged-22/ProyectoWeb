@@ -16,6 +16,12 @@ public interface RolProcesoRepository extends JpaRepository<RolProceso, Integer>
 
     boolean existsByEmpresaIdAndNombreAndActivoTrue(Integer empresaId, String nombre);
 
+    List<RolProceso> findByEmpresaIdOrderByNombreAsc(Integer empresaId);
+
+    List<RolProceso> findByEmpresaIdAndActivoTrueOrderByNombreAsc(Integer empresaId);
+
+    List<RolProceso> findByEmpresaIdAndActivoOrderByNombreAsc(Integer empresaId, boolean activo);
+
     Optional<RolProceso> findByIdAndActivoTrue(Integer id);
 
     @Query("""

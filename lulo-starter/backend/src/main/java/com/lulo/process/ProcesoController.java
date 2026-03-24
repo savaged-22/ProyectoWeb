@@ -29,11 +29,12 @@ public class ProcesoController {
             description = "Lista paginada con filtros opcionales por estado, categoría y nombre")
     public Page<ProcesoResponse> listar(
             @RequestParam Integer empresaId,
+            @RequestParam Integer usuarioId,
             @RequestParam(required = false) String estado,
             @RequestParam(required = false) String categoria,
             @RequestParam(required = false) String nombre,
             @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
-        return procesoService.listar(empresaId, estado, categoria, nombre, pageable);
+        return procesoService.listar(empresaId, usuarioId, estado, categoria, nombre, pageable);
     }
 
     @GetMapping("/{id}")
@@ -42,8 +43,9 @@ public class ProcesoController {
             description = "Retorna el proceso y todos sus elementos del diagrama: lanes, nodos y arcos")
     public ProcesoDetalleResponse obtener(
             @PathVariable Integer id,
-            @RequestParam Integer empresaId) {
-        return procesoService.obtener(id, empresaId);
+            @RequestParam Integer empresaId,
+            @RequestParam Integer usuarioId) {
+        return procesoService.obtener(id, empresaId, usuarioId);
     }
 
     @PostMapping

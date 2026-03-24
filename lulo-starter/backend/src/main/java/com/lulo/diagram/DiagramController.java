@@ -10,6 +10,10 @@ import com.lulo.diagram.arc.dto.EliminarArcoRequest;
 import com.lulo.diagram.gateway.dto.CrearGatewayRequest;
 import com.lulo.diagram.gateway.dto.EditarGatewayRequest;
 import com.lulo.diagram.gateway.dto.EliminarGatewayRequest;
+import com.lulo.diagram.lane.dto.CrearLaneRequest;
+import com.lulo.diagram.lane.dto.EditarLaneRequest;
+import com.lulo.diagram.lane.dto.EliminarLaneRequest;
+import com.lulo.diagram.lane.dto.LaneResponse;
 import com.lulo.diagram.node.dto.NodoResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -59,6 +63,17 @@ public class DiagramController {
         return diagramService.crearArco(procesoId, request);
     }
 
+    @PostMapping("/lanes")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(
+            summary = "Crear lane",
+            description = "Agrega una lane al proceso y opcionalmente la vincula con un rol funcional")
+    public LaneResponse crearLane(
+            @PathVariable Integer procesoId,
+            @Valid @RequestBody CrearLaneRequest request) {
+        return diagramService.crearLane(procesoId, request);
+    }
+
     @PatchMapping("/actividades/{actividadId}")
     @Operation(
             summary = "Editar actividad",
@@ -90,6 +105,17 @@ public class DiagramController {
             @PathVariable Integer arcoId,
             @Valid @RequestBody EditarArcoRequest request) {
         return diagramService.editarArco(procesoId, arcoId, request);
+    }
+
+    @PatchMapping("/lanes/{laneId}")
+    @Operation(
+            summary = "Editar lane",
+            description = "Actualiza nombre, orden o rol de proceso asociado a la lane")
+    public LaneResponse editarLane(
+            @PathVariable Integer procesoId,
+            @PathVariable Integer laneId,
+            @Valid @RequestBody EditarLaneRequest request) {
+        return diagramService.editarLane(procesoId, laneId, request);
     }
 
     @DeleteMapping("/actividades/{actividadId}")
@@ -126,5 +152,17 @@ public class DiagramController {
             @PathVariable Integer arcoId,
             @Valid @RequestBody EliminarArcoRequest request) {
         diagramService.eliminarArco(procesoId, arcoId, request);
+    }
+
+    @DeleteMapping("/lanes/{laneId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(
+            summary = "Eliminar lane",
+            description = "Elimina la lane siempre que no tenga nodos asignados")
+    public void eliminarLane(
+            @PathVariable Integer procesoId,
+            @PathVariable Integer laneId,
+            @Valid @RequestBody EliminarLaneRequest request) {
+        diagramService.eliminarLane(procesoId, laneId, request);
     }
 }

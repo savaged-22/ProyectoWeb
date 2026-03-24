@@ -4,6 +4,7 @@ import com.lulo.common.exception.ApiException;
 import com.lulo.company.EmpresaRepository;
 import com.lulo.rbac.RolPool;
 import com.lulo.rbac.RolPoolRepository;
+import com.lulo.rbac.PoolPermissionService;
 import com.lulo.rbac.UsuarioRolPool;
 import com.lulo.rbac.UsuarioRolPoolId;
 import com.lulo.rbac.UsuarioRolPoolRepository;
@@ -32,6 +33,7 @@ public class InvitacionService {
     private final UsuarioRepository           usuarioRepository;
     private final RolPoolRepository           rolPoolRepository;
     private final UsuarioRolPoolRepository    usuarioRolPoolRepository;
+    private final PoolPermissionService       poolPermissionService;
 
     // ── Invitar usuario ───────────────────────────────────────────────────────
 
@@ -51,6 +53,12 @@ public class InvitacionService {
 
         var invitadoPor = usuarioRepository.findById(request.getInvitadoPorId())
                 .orElseThrow(() -> new ApiException("Usuario que invita no encontrado", HttpStatus.NOT_FOUND));
+
+        if (!invitadoPor.getEmpresa().getId().equals(empresa.getId())) {
+            throw new ApiException("El usuario que invita no pertenece a esta empresa", HttpStatus.FORBIDDEN);
+        }
+
+        poolPermissionService.requirePermisoEnPool(invitadoPor.getId(), rolPool.getPool().getId(), "USUARIO_INVITAR");
 
         // No puede haber una invitación pendiente para el mismo correo en la misma empresa
         if (invitacionRepository.existsByEmailAndEstado(request.getEmailInvitado(), "pendiente")) {

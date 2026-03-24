@@ -11,18 +11,26 @@ import com.lulo.process.dto.EditarProcesoRequest;
 import com.lulo.process.dto.EliminarProcesoRequest;
 import com.lulo.process.dto.ProcesoDetalleResponse;
 import com.lulo.process.dto.ProcesoResponse;
+import com.lulo.rbac.PoolPermissionService;
+import com.lulo.sharing.ProcesoCompartidoService;
 import com.lulo.users.Usuario;
 import com.lulo.users.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -34,15 +42,20 @@ public class ProcesoService {
     private final UsuarioRepository  usuarioRepository;
     private final AuditService       auditService;
     private final DiagramService     diagramService;
+    private final PoolPermissionService poolPermissionService;
+    private final ProcesoCompartidoService procesoCompartidoService;
 
     // ── Listar con filtros ────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
     public Page<ProcesoResponse> listar(Integer empresaId,
+                                        Integer usuarioId,
                                         String estado,
                                         String categoria,
                                         String nombre,
                                         Pageable pageable) {
+        poolPermissionService.requireUsuarioDeEmpresa(usuarioId, empresaId);
+
         Specification<Proceso> spec = Specification
                 .where(ProcesoSpec.activos())
                 .and(ProcesoSpec.deEmpresa(empresaId));
@@ -51,19 +64,39 @@ public class ProcesoService {
         if (categoria != null) spec = spec.and(ProcesoSpec.conCategoria(categoria));
         if (nombre    != null) spec = spec.and(ProcesoSpec.nombreContiene(nombre));
 
-        return procesoRepository.findAll(spec, pageable).map(ProcesoService::toResponse);
+        List<Integer> poolIdsPropios = poolPermissionService.getPoolIdsConPermisoEnEmpresa(usuarioId, empresaId, "PROCESO_VER");
+        List<Proceso> visibles = new ArrayList<>();
+        if (!poolIdsPropios.isEmpty()) {
+            visibles.addAll(procesoRepository.findAll(spec).stream()
+                    .filter(proceso -> poolIdsPropios.contains(proceso.getPool().getId()))
+                    .toList());
+        }
+        visibles.addAll(procesoCompartidoService.findProcesosCompartidosVisibles(empresaId, usuarioId, estado, categoria, nombre));
+
+        List<Proceso> ordenados = deduplicar(visibles).stream()
+                .sorted(buildComparator(pageable))
+                .toList();
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), ordenados.size());
+        List<ProcesoResponse> content = start >= ordenados.size()
+                ? List.of()
+                : ordenados.subList(start, end).stream().map(ProcesoService::toResponse).toList();
+
+        return new PageImpl<>(content, pageable, ordenados.size());
     }
 
     // ── Obtener detalle con diagrama ──────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public ProcesoDetalleResponse obtener(Integer procesoId, Integer empresaId) {
+    public ProcesoDetalleResponse obtener(Integer procesoId, Integer empresaId, Integer usuarioId) {
+        poolPermissionService.requireUsuarioDeEmpresa(usuarioId, empresaId);
 
         Proceso proceso = procesoRepository.findByIdAndActivoTrue(procesoId)
                 .orElseThrow(() -> new ApiException("Proceso no encontrado", HttpStatus.NOT_FOUND));
 
-        if (!proceso.getEmpresa().getId().equals(empresaId)) {
-            throw new ApiException("El proceso no pertenece a esta empresa", HttpStatus.FORBIDDEN);
+        if (!procesoCompartidoService.puedeVer(proceso, usuarioId, empresaId)) {
+            throw new ApiException("El usuario no puede acceder a este proceso", HttpStatus.FORBIDDEN);
         }
 
         return ProcesoDetalleResponse.builder()
@@ -111,6 +144,8 @@ public class ProcesoService {
             throw new ApiException("El usuario no pertenece a esta empresa", HttpStatus.FORBIDDEN);
         }
 
+        poolPermissionService.requirePermisoEnPool(creadoPor.getId(), pool.getId(), "PROCESO_CREAR");
+
         String estado = request.getEstado() != null ? request.getEstado() : "borrador";
 
         Proceso proceso = new Proceso();
@@ -138,12 +173,9 @@ public class ProcesoService {
         Usuario editadoPor = usuarioRepository.findById(request.getEditadoPorId())
                 .orElseThrow(() -> new ApiException("Usuario no encontrado", HttpStatus.NOT_FOUND));
 
-        // El usuario debe pertenecer a la misma empresa que el proceso
-        if (!editadoPor.getEmpresa().getId().equals(proceso.getEmpresa().getId())) {
-            throw new ApiException("El usuario no pertenece a esta empresa", HttpStatus.FORBIDDEN);
+        if (!procesoCompartidoService.puedeEditar(proceso, editadoPor.getId(), editadoPor.getEmpresa().getId())) {
+            throw new ApiException("El usuario no tiene permiso para editar este proceso", HttpStatus.FORBIDDEN);
         }
-
-        // TODO: verificar permiso PROCESO_EDITAR del usuario en el pool (HU-Auth)
 
         // ── Snapshot antes del cambio ─────────────────────────────────────────
         Map<String, Object> antes = snapshot(proceso);
@@ -188,7 +220,7 @@ public class ProcesoService {
             throw new ApiException("El usuario no pertenece a esta empresa", HttpStatus.FORBIDDEN);
         }
 
-        // TODO: verificar permiso PROCESO_ELIMINAR del usuario en el pool (HU-Auth)
+        poolPermissionService.requirePermisoEnPool(eliminadoPor.getId(), proceso.getPool().getId(), "PROCESO_ELIMINAR");
 
         Map<String, Object> antes = snapshot(proceso);
 
@@ -216,6 +248,36 @@ public class ProcesoService {
         m.put("categoria",   p.getCategoria());
         m.put("estado",      p.getEstado());
         return m;
+    }
+
+    private List<Proceso> deduplicar(List<Proceso> procesos) {
+        Set<Integer> ids = new LinkedHashSet<>();
+        List<Proceso> deduplicados = new ArrayList<>();
+        for (Proceso proceso : procesos) {
+            if (ids.add(proceso.getId())) {
+                deduplicados.add(proceso);
+            }
+        }
+        return deduplicados;
+    }
+
+    private Comparator<Proceso> buildComparator(Pageable pageable) {
+        Comparator<Proceso> comparator = Comparator.comparing(Proceso::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()));
+        if (pageable.getSort().isUnsorted()) {
+            return comparator;
+        }
+
+        for (org.springframework.data.domain.Sort.Order order : pageable.getSort()) {
+            Comparator<Proceso> next = switch (order.getProperty()) {
+                case "nombre" -> Comparator.comparing(Proceso::getNombre, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER));
+                case "categoria" -> Comparator.comparing(Proceso::getCategoria, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER));
+                case "estado" -> Comparator.comparing(Proceso::getEstado, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER));
+                case "updatedAt" -> Comparator.comparing(Proceso::getUpdatedAt, Comparator.nullsLast(Comparator.naturalOrder()));
+                default -> Comparator.comparing(Proceso::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()));
+            };
+            comparator = order.isAscending() ? next : next.reversed();
+        }
+        return comparator;
     }
 
     // ── Mapper ────────────────────────────────────────────────────────────────
