@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -23,8 +24,21 @@ public class RolProcesoService {
 
     private final RolProcesoRepository rolProcesoRepository;
     private final EmpresaRepository empresaRepository;
-    private final UsuarioRepository usuarioRepository;
+    private final PoolPermissionService poolPermissionService;
     private final AuditService auditService;
+
+    @Transactional(readOnly = true)
+    public List<RolProcesoResponse> listar(Integer empresaId, Integer usuarioId, Boolean soloActivos) {
+        poolPermissionService.requirePermisoEnEmpresa(usuarioId, empresaId, "ROL_VER");
+
+        List<RolProceso> roles = Boolean.FALSE.equals(soloActivos)
+                ? rolProcesoRepository.findByEmpresaIdOrderByNombreAsc(empresaId)
+                : rolProcesoRepository.findByEmpresaIdAndActivoTrueOrderByNombreAsc(empresaId);
+
+        return roles.stream()
+                .map(this::toResponse)
+                .toList();
+    }
 
     @Transactional
     public RolProcesoResponse crear(CrearRolProcesoRequest request) {
@@ -38,7 +52,7 @@ public class RolProcesoService {
             throw new ApiException("Ya existe un rol activo con ese nombre en la empresa", HttpStatus.CONFLICT);
         }
 
-        // TODO: verificar permiso ROL_CREAR del usuario en la empresa/pool (HU-Auth)
+        poolPermissionService.requirePermisoEnEmpresa(creadoPor.getId(), empresa.getId(), "ROL_CREAR");
 
         RolProceso rolProceso = new RolProceso();
         rolProceso.setEmpresa(empresa);
@@ -77,7 +91,7 @@ public class RolProcesoService {
             throw new ApiException("Ya existe un rol activo con ese nombre en la empresa", HttpStatus.CONFLICT);
         }
 
-        // TODO: verificar permiso ROL_EDITAR del usuario en la empresa/pool (HU-Auth)
+        poolPermissionService.requirePermisoEnEmpresa(editadoPor.getId(), rolProceso.getEmpresa().getId(), "ROL_EDITAR");
 
         if (nombreNormalizado != null) rolProceso.setNombre(nombreNormalizado);
         if (request.getDescripcion() != null) rolProceso.setDescripcion(normalize(request.getDescripcion()));
@@ -109,7 +123,7 @@ public class RolProcesoService {
                     HttpStatus.CONFLICT);
         }
 
-        // TODO: verificar permiso ROL_ELIMINAR del usuario en la empresa/pool (HU-Auth)
+        poolPermissionService.requirePermisoEnEmpresa(eliminadoPor.getId(), rolProceso.getEmpresa().getId(), "ROL_ELIMINAR");
 
         Map<String, Object> antes = snapshot(rolProceso);
         rolProceso.setActivo(false);
@@ -127,14 +141,7 @@ public class RolProcesoService {
     }
 
     private com.lulo.users.Usuario requireUsuarioDeEmpresa(Integer usuarioId, Integer empresaId) {
-        var usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new ApiException("Usuario no encontrado", HttpStatus.NOT_FOUND));
-
-        if (!usuario.getEmpresa().getId().equals(empresaId)) {
-            throw new ApiException("El usuario no pertenece a esta empresa", HttpStatus.FORBIDDEN);
-        }
-
-        return usuario;
+        return poolPermissionService.requireUsuarioDeEmpresa(usuarioId, empresaId);
     }
 
     private Map<String, Object> snapshot(RolProceso rolProceso) {

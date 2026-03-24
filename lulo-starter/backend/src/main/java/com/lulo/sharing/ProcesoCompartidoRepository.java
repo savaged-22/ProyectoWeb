@@ -11,6 +11,8 @@ public interface ProcesoCompartidoRepository extends JpaRepository<ProcesoCompar
 
     List<ProcesoCompartido> findByPoolDestinoId(Integer poolDestinoId);
 
+    List<ProcesoCompartido> findByPoolDestinoIdIn(List<Integer> poolDestinoIds);
+
     Optional<ProcesoCompartido> findByProcesoIdAndPoolDestinoId(Integer procesoId, Integer poolDestinoId);
 
     boolean existsByProcesoIdAndPoolDestinoId(Integer procesoId, Integer poolDestinoId);

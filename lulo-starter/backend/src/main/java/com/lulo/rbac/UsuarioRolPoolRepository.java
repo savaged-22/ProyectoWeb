@@ -13,6 +13,8 @@ public interface UsuarioRolPoolRepository extends JpaRepository<UsuarioRolPool, 
 
     List<UsuarioRolPool> findByIdRolPoolId(Integer rolPoolId);
 
+    boolean existsByIdUsuarioId(Integer usuarioId);
+
     Optional<UsuarioRolPool> findByIdUsuarioIdAndIdRolPoolId(Integer usuarioId, Integer rolPoolId);
 
     boolean existsByIdUsuarioIdAndIdRolPoolId(Integer usuarioId, Integer rolPoolId);
@@ -30,4 +32,15 @@ public interface UsuarioRolPoolRepository extends JpaRepository<UsuarioRolPool, 
     List<UsuarioRolPool> findByUsuarioIdAndPoolId(
             @Param("usuarioId") Integer usuarioId,
             @Param("poolId") Integer poolId);
+
+    @Query("""
+            SELECT urp FROM UsuarioRolPool urp
+            JOIN urp.rolPool rp
+            JOIN rp.pool p
+            WHERE urp.id.usuarioId = :usuarioId
+              AND p.empresa.id = :empresaId
+            """)
+    List<UsuarioRolPool> findByUsuarioIdAndEmpresaId(
+            @Param("usuarioId") Integer usuarioId,
+            @Param("empresaId") Integer empresaId);
 }

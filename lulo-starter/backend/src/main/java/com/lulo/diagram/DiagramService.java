@@ -9,10 +9,10 @@ import com.lulo.diagram.activity.dto.EditarActividadRequest;
 import com.lulo.diagram.activity.dto.EliminarActividadRequest;
 import com.lulo.diagram.arc.Arco;
 import com.lulo.diagram.arc.ArcoRepository;
+import com.lulo.diagram.arc.dto.ArcoResponse;
 import com.lulo.diagram.arc.dto.CrearArcoRequest;
 import com.lulo.diagram.arc.dto.EditarArcoRequest;
 import com.lulo.diagram.arc.dto.EliminarArcoRequest;
-import com.lulo.diagram.arc.dto.ArcoResponse;
 import com.lulo.diagram.gateway.Gateway;
 import com.lulo.diagram.gateway.GatewayRepository;
 import com.lulo.diagram.gateway.dto.CrearGatewayRequest;
@@ -20,13 +20,20 @@ import com.lulo.diagram.gateway.dto.EditarGatewayRequest;
 import com.lulo.diagram.gateway.dto.EliminarGatewayRequest;
 import com.lulo.diagram.lane.Lane;
 import com.lulo.diagram.lane.LaneRepository;
+import com.lulo.diagram.lane.dto.CrearLaneRequest;
+import com.lulo.diagram.lane.dto.EditarLaneRequest;
+import com.lulo.diagram.lane.dto.EliminarLaneRequest;
 import com.lulo.diagram.lane.dto.LaneResponse;
 import com.lulo.diagram.node.Nodo;
 import com.lulo.diagram.node.NodoRepository;
 import com.lulo.diagram.node.dto.NodoResponse;
 import com.lulo.process.Proceso;
 import com.lulo.process.ProcesoRepository;
-import com.lulo.users.UsuarioRepository;
+import com.lulo.rbac.PoolPermissionService;
+import com.lulo.rbac.RolProceso;
+import com.lulo.rbac.RolProcesoRepository;
+import com.lulo.sharing.ProcesoCompartidoService;
+import com.lulo.users.Usuario;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -40,34 +47,22 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class DiagramService {
 
-    private final ProcesoRepository   procesoRepository;
-    private final LaneRepository      laneRepository;
-    private final NodoRepository      nodoRepository;
+    private final ProcesoRepository procesoRepository;
+    private final LaneRepository laneRepository;
+    private final NodoRepository nodoRepository;
     private final ActividadRepository actividadRepository;
-    private final GatewayRepository   gatewayRepository;
-    private final ArcoRepository      arcoRepository;
-    private final UsuarioRepository   usuarioRepository;
-    private final AuditService        auditService;
-
-    // ── Crear actividad ───────────────────────────────────────────────────────
+    private final GatewayRepository gatewayRepository;
+    private final ArcoRepository arcoRepository;
+    private final AuditService auditService;
+    private final PoolPermissionService poolPermissionService;
+    private final RolProcesoRepository rolProcesoRepository;
+    private final ProcesoCompartidoService procesoCompartidoService;
 
     @Transactional
     public NodoResponse crearActividad(Integer procesoId, CrearActividadRequest request) {
-
-        Proceso proceso = procesoRepository.findByIdAndActivoTrue(procesoId)
-                .orElseThrow(() -> new ApiException("Proceso no encontrado", HttpStatus.NOT_FOUND));
-
-        Lane lane = null;
-        if (request.getLaneId() != null) {
-            lane = laneRepository.findById(request.getLaneId())
-                    .orElseThrow(() -> new ApiException("Lane no encontrada", HttpStatus.NOT_FOUND));
-            // La lane debe pertenecer al mismo proceso
-            if (!lane.getProceso().getId().equals(procesoId)) {
-                throw new ApiException("La lane no pertenece a este proceso", HttpStatus.FORBIDDEN);
-            }
-        }
-
-        // TODO: verificar permiso DIAGRAMA_EDITAR del usuario en el pool (HU-Auth)
+        Proceso proceso = requireProcesoActivo(procesoId);
+        requireUsuarioConEdicionDiagrama(proceso, request.getCreadoPorId());
+        Lane lane = resolveLane(procesoId, request.getLaneId());
 
         Actividad actividad = new Actividad();
         actividad.setProceso(proceso);
@@ -82,16 +77,11 @@ public class DiagramService {
         return toNodoResponse(actividad);
     }
 
-    // ── Crear gateway ────────────────────────────────────────────────────────
-
     @Transactional
     public NodoResponse crearGateway(Integer procesoId, CrearGatewayRequest request) {
-
         Proceso proceso = requireProcesoActivo(procesoId);
-        var creadoPor = requireUsuarioDeEmpresa(request.getCreadoPorId(), proceso.getEmpresa().getId());
+        Usuario creadoPor = requireUsuarioConEdicionDiagrama(proceso, request.getCreadoPorId());
         Lane lane = resolveLane(procesoId, request.getLaneId());
-
-        // TODO: verificar permiso DIAGRAMA_EDITAR del usuario en el pool (HU-Auth)
 
         Gateway gateway = new Gateway();
         gateway.setProceso(proceso);
@@ -116,44 +106,83 @@ public class DiagramService {
         return toNodoResponse(gateway);
     }
 
-    // ── Editar actividad ──────────────────────────────────────────────────────
+    @Transactional
+    public ArcoResponse crearArco(Integer procesoId, CrearArcoRequest request) {
+        Proceso proceso = requireProcesoActivo(procesoId);
+        Usuario creadoPor = requireUsuarioConEdicionDiagrama(proceso, request.getCreadoPorId());
+        Nodo fromNodo = requireNodoDiagramable(procesoId, request.getFromNodoId(), "origen");
+        Nodo toNodo = requireNodoDiagramable(procesoId, request.getToNodoId(), "destino");
+
+        validateArcoChange(null, procesoId, fromNodo, toNodo, request.getCondicionExpr());
+
+        Arco arco = new Arco();
+        arco.setProceso(proceso);
+        arco.setFromNodo(fromNodo);
+        arco.setToNodo(toNodo);
+        arco.setCondicionExpr(normalize(request.getCondicionExpr()));
+        arco.setPropsJson(request.getPropsJson());
+        arco = arcoRepository.save(arco);
+
+        auditService.registrar(
+                proceso.getEmpresa(),
+                creadoPor,
+                "ARCO",
+                arco.getId(),
+                "CREAR",
+                null,
+                snapshotArco(arco)
+        );
+
+        return toArcoResponse(arco);
+    }
 
     @Transactional
-    public NodoResponse editarActividad(Integer procesoId, Integer actividadId,
-                                        EditarActividadRequest request) {
+    public LaneResponse crearLane(Integer procesoId, CrearLaneRequest request) {
+        Proceso proceso = requireProcesoActivo(procesoId);
+        Usuario creadoPor = requireUsuarioConEdicionDiagrama(proceso, request.getCreadoPorId());
 
+        String nombre = normalizeRequired(request.getNombre(), "El nombre de la lane es obligatorio");
+        if (laneRepository.existsByProcesoIdAndNombre(procesoId, nombre)) {
+            throw new ApiException("Ya existe una lane con ese nombre en el proceso", HttpStatus.CONFLICT);
+        }
+
+        Lane lane = new Lane();
+        lane.setProceso(proceso);
+        lane.setRolProceso(resolveRolProceso(proceso.getEmpresa().getId(), request.getRolProcesoId()));
+        lane.setNombre(nombre);
+        lane.setOrden(request.getOrden() != null ? request.getOrden() : 0);
+        lane = laneRepository.save(lane);
+
+        auditService.registrar(
+                proceso.getEmpresa(),
+                creadoPor,
+                "LANE",
+                lane.getId(),
+                "CREAR",
+                null,
+                snapshotLane(lane)
+        );
+
+        return toLaneResponse(lane);
+    }
+
+    @Transactional
+    public NodoResponse editarActividad(Integer procesoId, Integer actividadId, EditarActividadRequest request) {
         Actividad actividad = actividadRepository.findById(actividadId)
                 .orElseThrow(() -> new ApiException("Actividad no encontrada", HttpStatus.NOT_FOUND));
-
         if (!actividad.getProceso().getId().equals(procesoId)) {
             throw new ApiException("La actividad no pertenece a este proceso", HttpStatus.FORBIDDEN);
         }
 
-        var editadoPor = usuarioRepository.findById(request.getEditadoPorId())
-                .orElseThrow(() -> new ApiException("Usuario no encontrado", HttpStatus.NOT_FOUND));
-
-        if (!editadoPor.getEmpresa().getId().equals(actividad.getProceso().getEmpresa().getId())) {
-            throw new ApiException("El usuario no pertenece a esta empresa", HttpStatus.FORBIDDEN);
-        }
-
-        // TODO: verificar permiso DIAGRAMA_EDITAR del usuario en el pool (HU-Auth)
-
+        Usuario editadoPor = requireUsuarioConEdicionDiagrama(actividad.getProceso(), request.getEditadoPorId());
         Map<String, Object> antes = snapshotActividad(actividad);
 
-        if (request.getLabel()         != null) actividad.setLabel(request.getLabel());
+        if (request.getLabel() != null) actividad.setLabel(request.getLabel());
         if (request.getTipoActividad() != null) actividad.setTipoActividad(request.getTipoActividad());
-        if (request.getPosX()          != null) actividad.setPosX(request.getPosX());
-        if (request.getPosY()          != null) actividad.setPosY(request.getPosY());
-        if (request.getPropsJson()     != null) actividad.setPropsJson(request.getPropsJson());
-
-        if (request.getLaneId() != null) {
-            Lane lane = laneRepository.findById(request.getLaneId())
-                    .orElseThrow(() -> new ApiException("Lane no encontrada", HttpStatus.NOT_FOUND));
-            if (!lane.getProceso().getId().equals(procesoId)) {
-                throw new ApiException("La lane no pertenece a este proceso", HttpStatus.FORBIDDEN);
-            }
-            actividad.setLane(lane);
-        }
+        if (request.getPosX() != null) actividad.setPosX(request.getPosX());
+        if (request.getPosY() != null) actividad.setPosY(request.getPosY());
+        if (request.getPropsJson() != null) actividad.setPropsJson(request.getPropsJson());
+        if (request.getLaneId() != null) actividad.setLane(resolveLane(procesoId, request.getLaneId()));
 
         actividad = actividadRepository.save(actividad);
 
@@ -170,19 +199,12 @@ public class DiagramService {
         return toNodoResponse(actividad);
     }
 
-    // ── Editar gateway ───────────────────────────────────────────────────────
-
     @Transactional
-    public NodoResponse editarGateway(Integer procesoId, Integer gatewayId,
-                                      EditarGatewayRequest request) {
-
+    public NodoResponse editarGateway(Integer procesoId, Integer gatewayId, EditarGatewayRequest request) {
         Gateway gateway = gatewayRepository.findByIdAndProcesoId(gatewayId, procesoId)
                 .orElseThrow(() -> new ApiException("Gateway no encontrado", HttpStatus.NOT_FOUND));
 
-        var editadoPor = requireUsuarioDeEmpresa(request.getEditadoPorId(), gateway.getProceso().getEmpresa().getId());
-
-        // TODO: verificar permiso DIAGRAMA_EDITAR del usuario en el pool (HU-Auth)
-
+        Usuario editadoPor = requireUsuarioConEdicionDiagrama(gateway.getProceso(), request.getEditadoPorId());
         Map<String, Object> antes = snapshotGateway(gateway);
 
         if (request.getLabel() != null) gateway.setLabel(request.getLabel());
@@ -208,44 +230,108 @@ public class DiagramService {
         return toNodoResponse(gateway);
     }
 
-    // ── Eliminar actividad ────────────────────────────────────────────────────
+    @Transactional
+    public ArcoResponse editarArco(Integer procesoId, Integer arcoId, EditarArcoRequest request) {
+        Arco arco = arcoRepository.findByIdAndActivoTrue(arcoId)
+                .orElseThrow(() -> new ApiException("Arco no encontrado", HttpStatus.NOT_FOUND));
+        if (!arco.getProceso().getId().equals(procesoId)) {
+            throw new ApiException("El arco no pertenece a este proceso", HttpStatus.FORBIDDEN);
+        }
+
+        Usuario editadoPor = requireUsuarioConEdicionDiagrama(arco.getProceso(), request.getEditadoPorId());
+        Nodo fromNodo = request.getFromNodoId() != null
+                ? requireNodoDiagramable(procesoId, request.getFromNodoId(), "origen")
+                : arco.getFromNodo();
+        Nodo toNodo = request.getToNodoId() != null
+                ? requireNodoDiagramable(procesoId, request.getToNodoId(), "destino")
+                : arco.getToNodo();
+        String condicionExpr = request.getCondicionExpr() != null
+                ? normalize(request.getCondicionExpr())
+                : arco.getCondicionExpr();
+
+        validateArcoChange(arco.getId(), procesoId, fromNodo, toNodo, condicionExpr);
+
+        Map<String, Object> antes = snapshotArco(arco);
+        arco.setFromNodo(fromNodo);
+        arco.setToNodo(toNodo);
+        arco.setCondicionExpr(condicionExpr);
+        if (request.getPropsJson() != null) arco.setPropsJson(request.getPropsJson());
+        arco = arcoRepository.save(arco);
+
+        auditService.registrar(
+                arco.getProceso().getEmpresa(),
+                editadoPor,
+                "ARCO",
+                arco.getId(),
+                "EDITAR",
+                antes,
+                snapshotArco(arco)
+        );
+
+        return toArcoResponse(arco);
+    }
 
     @Transactional
-    public void eliminarActividad(Integer procesoId, Integer actividadId,
-                                  EliminarActividadRequest request) {
+    public LaneResponse editarLane(Integer procesoId, Integer laneId, EditarLaneRequest request) {
+        Proceso proceso = requireProcesoActivo(procesoId);
+        Lane lane = laneRepository.findById(laneId)
+                .orElseThrow(() -> new ApiException("Lane no encontrada", HttpStatus.NOT_FOUND));
+        if (!lane.getProceso().getId().equals(procesoId)) {
+            throw new ApiException("La lane no pertenece a este proceso", HttpStatus.FORBIDDEN);
+        }
 
+        Usuario editadoPor = requireUsuarioConEdicionDiagrama(proceso, request.getEditadoPorId());
+        Map<String, Object> antes = snapshotLane(lane);
+        String nombre = request.getNombre() != null
+                ? normalizeRequired(request.getNombre(), "El nombre de la lane no puede estar vacío")
+                : null;
+
+        if (nombre != null &&
+                laneRepository.existsByProcesoIdAndNombreExcluyendoId(procesoId, nombre, laneId)) {
+            throw new ApiException("Ya existe una lane con ese nombre en el proceso", HttpStatus.CONFLICT);
+        }
+
+        if (nombre != null) lane.setNombre(nombre);
+        if (request.getOrden() != null) lane.setOrden(request.getOrden());
+        if (Boolean.TRUE.equals(request.getLimpiarRolProceso())) {
+            lane.setRolProceso(null);
+        } else if (request.getRolProcesoId() != null) {
+            lane.setRolProceso(resolveRolProceso(proceso.getEmpresa().getId(), request.getRolProcesoId()));
+        }
+
+        lane = laneRepository.save(lane);
+
+        auditService.registrar(
+                proceso.getEmpresa(),
+                editadoPor,
+                "LANE",
+                lane.getId(),
+                "EDITAR",
+                antes,
+                snapshotLane(lane)
+        );
+
+        return toLaneResponse(lane);
+    }
+
+    @Transactional
+    public void eliminarActividad(Integer procesoId, Integer actividadId, EliminarActividadRequest request) {
         Actividad actividad = actividadRepository.findById(actividadId)
                 .orElseThrow(() -> new ApiException("Actividad no encontrada", HttpStatus.NOT_FOUND));
-
         if (!actividad.getProceso().getId().equals(procesoId)) {
             throw new ApiException("La actividad no pertenece a este proceso", HttpStatus.FORBIDDEN);
         }
 
-        var eliminadoPor = usuarioRepository.findById(request.getEliminadoPorId())
-                .orElseThrow(() -> new ApiException("Usuario no encontrado", HttpStatus.NOT_FOUND));
-
-        if (!eliminadoPor.getEmpresa().getId().equals(actividad.getProceso().getEmpresa().getId())) {
-            throw new ApiException("El usuario no pertenece a esta empresa", HttpStatus.FORBIDDEN);
-        }
-
-        // TODO: verificar permiso DIAGRAMA_EDITAR del usuario en el pool (HU-Auth)
-
+        Usuario eliminadoPor = requireUsuarioConEdicionDiagrama(actividad.getProceso(), request.getEliminadoPorId());
         Map<String, Object> snapshotAntes = snapshotActividad(actividad);
 
-        // ── Ajuste automático del flujo ───────────────────────────────────────
-        // Los arcos tienen FK a nodo — deben eliminarse físicamente antes que el nodo
-        // para no violar la integridad referencial.
-        Integer nodoId = actividad.getId(); // con JOINED el ID de Actividad == ID de Nodo
+        Integer nodoId = actividad.getId();
         List<Arco> arcosConectados = new java.util.ArrayList<>();
         arcosConectados.addAll(arcoRepository.findByFromNodoId(nodoId));
         arcosConectados.addAll(arcoRepository.findByToNodoId(nodoId));
         arcoRepository.deleteAll(arcosConectados);
-
-        // ── Eliminación física de la actividad y su nodo base ─────────────────
-        // JPA elimina primero de `actividad`, luego de `nodo` (orden FK)
         actividadRepository.delete(actividad);
 
-        // ── Historial ─────────────────────────────────────────────────────────
         Map<String, Object> detalle = new LinkedHashMap<>(snapshotAntes);
         detalle.put("arcosEliminados", arcosConectados.size());
 
@@ -260,19 +346,12 @@ public class DiagramService {
         );
     }
 
-    // ── Eliminar gateway ─────────────────────────────────────────────────────
-
     @Transactional
-    public void eliminarGateway(Integer procesoId, Integer gatewayId,
-                                EliminarGatewayRequest request) {
-
+    public void eliminarGateway(Integer procesoId, Integer gatewayId, EliminarGatewayRequest request) {
         Gateway gateway = gatewayRepository.findByIdAndProcesoId(gatewayId, procesoId)
                 .orElseThrow(() -> new ApiException("Gateway no encontrado", HttpStatus.NOT_FOUND));
 
-        var eliminadoPor = requireUsuarioDeEmpresa(request.getEliminadoPorId(), gateway.getProceso().getEmpresa().getId());
-
-        // TODO: verificar permiso DIAGRAMA_EDITAR del usuario en el pool (HU-Auth)
-
+        Usuario eliminadoPor = requireUsuarioConEdicionDiagrama(gateway.getProceso(), request.getEliminadoPorId());
         List<Arco> arcosEntrantes = arcoRepository.findByToNodoIdAndActivoTrue(gatewayId);
         List<Arco> arcosSalientes = arcoRepository.findByFromNodoIdAndActivoTrue(gatewayId);
         if (!arcosEntrantes.isEmpty() || !arcosSalientes.isEmpty()) {
@@ -295,106 +374,15 @@ public class DiagramService {
         );
     }
 
-    // ── Crear arco ───────────────────────────────────────────────────────────
-
-    @Transactional
-    public ArcoResponse crearArco(Integer procesoId, CrearArcoRequest request) {
-
-        Proceso proceso = requireProcesoActivo(procesoId);
-        var creadoPor = requireUsuarioDeEmpresa(request.getCreadoPorId(), proceso.getEmpresa().getId());
-        Nodo fromNodo = requireNodoDiagramable(procesoId, request.getFromNodoId(), "origen");
-        Nodo toNodo = requireNodoDiagramable(procesoId, request.getToNodoId(), "destino");
-
-        validateArcoChange(null, procesoId, fromNodo, toNodo, request.getCondicionExpr());
-
-        // TODO: verificar permiso DIAGRAMA_EDITAR del usuario en el pool (HU-Auth)
-
-        Arco arco = new Arco();
-        arco.setProceso(proceso);
-        arco.setFromNodo(fromNodo);
-        arco.setToNodo(toNodo);
-        arco.setCondicionExpr(normalize(request.getCondicionExpr()));
-        arco.setPropsJson(request.getPropsJson());
-        arco = arcoRepository.save(arco);
-
-        auditService.registrar(
-                proceso.getEmpresa(),
-                creadoPor,
-                "ARCO",
-                arco.getId(),
-                "CREAR",
-                null,
-                snapshotArco(arco)
-        );
-
-        return toArcoResponse(arco);
-    }
-
-    // ── Editar arco ──────────────────────────────────────────────────────────
-
-    @Transactional
-    public ArcoResponse editarArco(Integer procesoId, Integer arcoId, EditarArcoRequest request) {
-
-        Arco arco = arcoRepository.findByIdAndActivoTrue(arcoId)
-                .orElseThrow(() -> new ApiException("Arco no encontrado", HttpStatus.NOT_FOUND));
-
-        if (!arco.getProceso().getId().equals(procesoId)) {
-            throw new ApiException("El arco no pertenece a este proceso", HttpStatus.FORBIDDEN);
-        }
-
-        var editadoPor = requireUsuarioDeEmpresa(request.getEditadoPorId(), arco.getProceso().getEmpresa().getId());
-
-        Nodo fromNodo = request.getFromNodoId() != null
-                ? requireNodoDiagramable(procesoId, request.getFromNodoId(), "origen")
-                : arco.getFromNodo();
-        Nodo toNodo = request.getToNodoId() != null
-                ? requireNodoDiagramable(procesoId, request.getToNodoId(), "destino")
-                : arco.getToNodo();
-        String condicionExpr = request.getCondicionExpr() != null
-                ? normalize(request.getCondicionExpr())
-                : arco.getCondicionExpr();
-
-        validateArcoChange(arco.getId(), procesoId, fromNodo, toNodo, condicionExpr);
-
-        // TODO: verificar permiso DIAGRAMA_EDITAR del usuario en el pool (HU-Auth)
-
-        Map<String, Object> antes = snapshotArco(arco);
-
-        arco.setFromNodo(fromNodo);
-        arco.setToNodo(toNodo);
-        arco.setCondicionExpr(condicionExpr);
-        if (request.getPropsJson() != null) arco.setPropsJson(request.getPropsJson());
-        arco = arcoRepository.save(arco);
-
-        auditService.registrar(
-                arco.getProceso().getEmpresa(),
-                editadoPor,
-                "ARCO",
-                arco.getId(),
-                "EDITAR",
-                antes,
-                snapshotArco(arco)
-        );
-
-        return toArcoResponse(arco);
-    }
-
-    // ── Eliminar arco ────────────────────────────────────────────────────────
-
     @Transactional
     public void eliminarArco(Integer procesoId, Integer arcoId, EliminarArcoRequest request) {
-
         Arco arco = arcoRepository.findByIdAndActivoTrue(arcoId)
                 .orElseThrow(() -> new ApiException("Arco no encontrado", HttpStatus.NOT_FOUND));
-
         if (!arco.getProceso().getId().equals(procesoId)) {
             throw new ApiException("El arco no pertenece a este proceso", HttpStatus.FORBIDDEN);
         }
 
-        var eliminadoPor = requireUsuarioDeEmpresa(request.getEliminadoPorId(), arco.getProceso().getEmpresa().getId());
-
-        // TODO: verificar permiso DIAGRAMA_EDITAR del usuario en el pool (HU-Auth)
-
+        Usuario eliminadoPor = requireUsuarioConEdicionDiagrama(arco.getProceso(), request.getEliminadoPorId());
         Map<String, Object> antes = snapshotArco(arco);
         arco.setActivo(false);
         arcoRepository.save(arco);
@@ -410,63 +398,92 @@ public class DiagramService {
         );
     }
 
-    // ── Consultas del diagrama ────────────────────────────────────────────────
+    @Transactional
+    public void eliminarLane(Integer procesoId, Integer laneId, EliminarLaneRequest request) {
+        Proceso proceso = requireProcesoActivo(procesoId);
+        Lane lane = laneRepository.findById(laneId)
+                .orElseThrow(() -> new ApiException("Lane no encontrada", HttpStatus.NOT_FOUND));
+        if (!lane.getProceso().getId().equals(procesoId)) {
+            throw new ApiException("La lane no pertenece a este proceso", HttpStatus.FORBIDDEN);
+        }
+
+        Usuario eliminadoPor = requireUsuarioConEdicionDiagrama(proceso, request.getEliminadoPorId());
+        if (!nodoRepository.findByProcesoIdAndLaneId(procesoId, laneId).isEmpty()) {
+            throw new ApiException("No se puede eliminar una lane que tiene nodos asignados", HttpStatus.CONFLICT);
+        }
+
+        Map<String, Object> antes = snapshotLane(lane);
+        laneRepository.delete(lane);
+
+        auditService.registrar(
+                proceso.getEmpresa(),
+                eliminadoPor,
+                "LANE",
+                laneId,
+                "ELIMINAR",
+                antes,
+                null
+        );
+    }
 
     @Transactional(readOnly = true)
     public List<LaneResponse> getLanes(Integer procesoId) {
-        return laneRepository.findByProcesoIdOrderByOrdenAsc(procesoId)
-                .stream()
+        return laneRepository.findByProcesoIdOrderByOrdenAsc(procesoId).stream()
                 .map(DiagramService::toLaneResponse)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public List<NodoResponse> getNodos(Integer procesoId) {
-        return nodoRepository.findByProcesoId(procesoId)
-                .stream()
+        return nodoRepository.findByProcesoId(procesoId).stream()
                 .map(DiagramService::toNodoResponse)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public List<ArcoResponse> getArcos(Integer procesoId) {
-        return arcoRepository.findByProcesoIdAndActivoTrue(procesoId)
-                .stream()
+        return arcoRepository.findByProcesoIdAndActivoTrue(procesoId).stream()
                 .map(DiagramService::toArcoResponse)
                 .toList();
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
-    private Map<String, Object> snapshotActividad(Actividad a) {
+    private Map<String, Object> snapshotActividad(Actividad actividad) {
         Map<String, Object> m = new LinkedHashMap<>();
-        m.put("label",         a.getLabel());
-        m.put("tipoActividad", a.getTipoActividad());
-        m.put("laneId",        a.getLane() != null ? a.getLane().getId() : null);
-        m.put("posX",          a.getPosX());
-        m.put("posY",          a.getPosY());
-        m.put("propsJson",     a.getPropsJson());
+        m.put("label", actividad.getLabel());
+        m.put("tipoActividad", actividad.getTipoActividad());
+        m.put("laneId", actividad.getLane() != null ? actividad.getLane().getId() : null);
+        m.put("posX", actividad.getPosX());
+        m.put("posY", actividad.getPosY());
+        m.put("propsJson", actividad.getPropsJson());
         return m;
     }
 
-    private Map<String, Object> snapshotGateway(Gateway g) {
+    private Map<String, Object> snapshotGateway(Gateway gateway) {
         Map<String, Object> m = new LinkedHashMap<>();
-        m.put("label",       g.getLabel());
-        m.put("tipoGateway", g.getTipoGateway());
-        m.put("laneId",      g.getLane() != null ? g.getLane().getId() : null);
-        m.put("posX",        g.getPosX());
-        m.put("posY",        g.getPosY());
-        m.put("configJson",  g.getConfigJson());
+        m.put("label", gateway.getLabel());
+        m.put("tipoGateway", gateway.getTipoGateway());
+        m.put("laneId", gateway.getLane() != null ? gateway.getLane().getId() : null);
+        m.put("posX", gateway.getPosX());
+        m.put("posY", gateway.getPosY());
+        m.put("configJson", gateway.getConfigJson());
         return m;
     }
 
-    private Map<String, Object> snapshotArco(Arco a) {
+    private Map<String, Object> snapshotArco(Arco arco) {
         Map<String, Object> m = new LinkedHashMap<>();
-        m.put("fromNodoId",     a.getFromNodo().getId());
-        m.put("toNodoId",       a.getToNodo().getId());
-        m.put("condicionExpr",  a.getCondicionExpr());
-        m.put("propsJson",      a.getPropsJson());
-        m.put("activo",         a.isActivo());
+        m.put("fromNodoId", arco.getFromNodo().getId());
+        m.put("toNodoId", arco.getToNodo().getId());
+        m.put("condicionExpr", arco.getCondicionExpr());
+        m.put("propsJson", arco.getPropsJson());
+        m.put("activo", arco.isActivo());
+        return m;
+    }
+
+    private Map<String, Object> snapshotLane(Lane lane) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("nombre", lane.getNombre());
+        m.put("orden", lane.getOrden());
+        m.put("rolProcesoId", lane.getRolProceso() != null ? lane.getRolProceso().getId() : null);
         return m;
     }
 
@@ -488,25 +505,32 @@ public class DiagramService {
         return lane;
     }
 
+    private RolProceso resolveRolProceso(Integer empresaId, Integer rolProcesoId) {
+        if (rolProcesoId == null) {
+            return null;
+        }
+
+        RolProceso rolProceso = rolProcesoRepository.findByIdAndActivoTrue(rolProcesoId)
+                .orElseThrow(() -> new ApiException("Rol de proceso no encontrado", HttpStatus.NOT_FOUND));
+        if (!rolProceso.getEmpresa().getId().equals(empresaId)) {
+            throw new ApiException("El rol de proceso no pertenece a esta empresa", HttpStatus.FORBIDDEN);
+        }
+        return rolProceso;
+    }
+
     private Nodo requireNodoDiagramable(Integer procesoId, Integer nodoId, String etiqueta) {
         Nodo nodo = nodoRepository.findById(nodoId)
                 .orElseThrow(() -> new ApiException("Nodo " + etiqueta + " no encontrado", HttpStatus.NOT_FOUND));
-
         if (!nodo.getProceso().getId().equals(procesoId)) {
             throw new ApiException("El nodo " + etiqueta + " no pertenece a este proceso", HttpStatus.FORBIDDEN);
         }
-
         if (!(nodo instanceof Actividad) && !(nodo instanceof Gateway)) {
-            throw new ApiException(
-                    "El nodo " + etiqueta + " debe ser una actividad o un gateway",
-                    HttpStatus.BAD_REQUEST);
+            throw new ApiException("El nodo " + etiqueta + " debe ser una actividad o un gateway", HttpStatus.BAD_REQUEST);
         }
-
         return nodo;
     }
 
-    private void validateArcoChange(Integer arcoId, Integer procesoId,
-                                    Nodo fromNodo, Nodo toNodo, String condicionExpr) {
+    private void validateArcoChange(Integer arcoId, Integer procesoId, Nodo fromNodo, Nodo toNodo, String condicionExpr) {
         if (fromNodo.getId().equals(toNodo.getId())) {
             throw new ApiException("El nodo origen y destino no pueden ser el mismo", HttpStatus.BAD_REQUEST);
         }
@@ -558,14 +582,11 @@ public class DiagramService {
         }
     }
 
-    private com.lulo.users.Usuario requireUsuarioDeEmpresa(Integer usuarioId, Integer empresaId) {
-        var usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new ApiException("Usuario no encontrado", HttpStatus.NOT_FOUND));
-
-        if (!usuario.getEmpresa().getId().equals(empresaId)) {
-            throw new ApiException("El usuario no pertenece a esta empresa", HttpStatus.FORBIDDEN);
+    private Usuario requireUsuarioConEdicionDiagrama(Proceso proceso, Integer usuarioId) {
+        Usuario usuario = poolPermissionService.requireUsuario(usuarioId);
+        if (!procesoCompartidoService.puedeEditarDiagrama(proceso, usuario.getId(), usuario.getEmpresa().getId())) {
+            throw new ApiException("El usuario no tiene permiso para editar el diagrama", HttpStatus.FORBIDDEN);
         }
-
         return usuario;
     }
 
@@ -577,7 +598,13 @@ public class DiagramService {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
-    // ── Mappers ───────────────────────────────────────────────────────────────
+    private String normalizeRequired(String value, String message) {
+        String normalized = normalize(value);
+        if (normalized == null) {
+            throw new ApiException(message, HttpStatus.BAD_REQUEST);
+        }
+        return normalized;
+    }
 
     public static LaneResponse toLaneResponse(Lane lane) {
         return LaneResponse.builder()
@@ -590,16 +617,10 @@ public class DiagramService {
                 .build();
     }
 
-    /**
-     * Mapeo polimórfico: Hibernate instancia Actividad o Gateway según el discriminador.
-     * Java 21 pattern matching para extraer los campos especializados.
-     */
     public static NodoResponse toNodoResponse(Nodo nodo) {
-        // Determinar tipo vía instanceof: el campo discriminador no se popula
-        // en memoria tras un INSERT (insertable=false, updatable=false)
         String tipo = nodo instanceof Actividad ? "actividad"
-                    : nodo instanceof Gateway   ? "gateway"
-                    : "nodo";
+                : nodo instanceof Gateway ? "gateway"
+                : "nodo";
 
         NodoResponse.NodoResponseBuilder builder = NodoResponse.builder()
                 .id(nodo.getId())
@@ -610,12 +631,12 @@ public class DiagramService {
                 .posY(nodo.getPosY())
                 .createdAt(nodo.getCreatedAt());
 
-        if (nodo instanceof Actividad a) {
-            builder.tipoActividad(a.getTipoActividad())
-                   .propsJson(a.getPropsJson());
-        } else if (nodo instanceof Gateway g) {
-            builder.tipoGateway(g.getTipoGateway())
-                   .configJson(g.getConfigJson());
+        if (nodo instanceof Actividad actividad) {
+            builder.tipoActividad(actividad.getTipoActividad())
+                    .propsJson(actividad.getPropsJson());
+        } else if (nodo instanceof Gateway gateway) {
+            builder.tipoGateway(gateway.getTipoGateway())
+                    .configJson(gateway.getConfigJson());
         }
 
         return builder.build();

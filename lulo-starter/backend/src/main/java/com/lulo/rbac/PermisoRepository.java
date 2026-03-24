@@ -11,4 +11,6 @@ public interface PermisoRepository extends JpaRepository<Permiso, Integer> {
     Optional<Permiso> findByCodigo(String codigo);
 
     List<Permiso> findByCodigoIn(List<String> codigos);
+
+    List<Permiso> findAllByOrderByCodigoAsc();
 }
