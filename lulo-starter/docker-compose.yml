@@ -1,17 +1,18 @@
 services:
 
   db:
+    profiles: ["local-db"]
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER:-lulo_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-change_me}
+      POSTGRES_DB: ${DB_NAME:-lulo}
     ports:
       - "${DB_PORT:-5432}:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-lulo_user} -d ${DB_NAME:-lulo}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -25,10 +26,7 @@ services:
     ports:
       - "${SERVER_PORT:-8080}:8080"
     env_file:
-      - .env
-    depends_on:
-      db:
-        condition: service_healthy
+      - remote-db.env
     networks:
       - lulo-net
 
