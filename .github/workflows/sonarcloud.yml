@@ -21,8 +21,8 @@ jobs:
           distribution: 'zulu'
 
       - name: Build and analyze
-        run: mvn clean verify sonar:sonar \
-          -Dsonar.projectKey=proyectoweb-backend \
-          -Dsonar.organization=semqo \
-          -Dsonar.host.url=https://sonarcloud.io \
-          -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+        run: cd lulo-starter && mvn clean verify sonar:sonar \
+  -Dsonar.projectKey=proyectoweb-backend \
+  -Dsonar.organization=semqo \
+  -Dsonar.host.url=https://sonarcloud.io \
+  -Dsonar.login=${{ secrets.SONAR_TOKEN }}
