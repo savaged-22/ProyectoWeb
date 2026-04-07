@@ -41,9 +41,26 @@ services:
     networks:
       - lulo-net
 
+  sonarqube:
+    profiles: ["sonar"]
+    image: sonarqube:10-community
+    ports:
+      - "9000:9000"
+    environment:
+      SONAR_JDBC_URL: ${SPRING_DATASOURCE_URL}
+      SONAR_JDBC_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SONAR_JDBC_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+    volumes:
+      - sonar_data:/opt/sonarqube/data
+      - sonar_logs:/opt/sonarqube/logs
+    networks:
+      - lulo-net
+
 networks:
   lulo-net:
     driver: bridge
 
 volumes:
   db_data:
+  sonar_data:
+  sonar_logs:

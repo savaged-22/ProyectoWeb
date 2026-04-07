@@ -1,3 +1,75 @@
+# ─────────────────────────────────────────────────────────────────
+# Backend
+# ─────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proyectoweb-backend
+  labels:
+    app: proyectoweb-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: proyectoweb-backend
+  template:
+    metadata:
+      labels:
+        app: proyectoweb-backend
+    spec:
+      containers:
+        - name: proyectoweb-backend
+          image: __BACKEND_IMAGE__
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: lulo-backend-secret
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: proyectoweb-backend-service
+  labels:
+    app: proyectoweb-backend
+spec:
+  selector:
+    app: proyectoweb-backend
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
+
+---
+# ─────────────────────────────────────────────────────────────────
+# Frontend
+# ─────────────────────────────────────────────────────────────────
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,7 +88,7 @@ spec:
     spec:
       containers:
         - name: proyectoweb-frontend
-          image: __IMAGE__
+          image: __FRONTEND_IMAGE__
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -59,3 +131,32 @@ spec:
       port: 80
       targetPort: 80
   type: ClusterIP
+
+---
+# ─────────────────────────────────────────────────────────────────
+# Ingress: expone frontend en / y backend en /api
+# ─────────────────────────────────────────────────────────────────
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: proyectoweb-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: proyectoweb-backend-service
+                port:
+                  number: 8080
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: proyectoweb-frontend-service
+                port:
+                  number: 80
