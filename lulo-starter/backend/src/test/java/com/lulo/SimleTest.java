@@ -1,3 +1,4 @@
+//primer test sonar
 package com.lulo;
 
 import org.junit.jupiter.api.Test;
