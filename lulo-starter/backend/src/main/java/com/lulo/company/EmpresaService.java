@@ -14,7 +14,7 @@ import com.lulo.rbac.UsuarioRolPoolId;
 import com.lulo.rbac.UsuarioRolPoolRepository;
 import com.lulo.users.Usuario;
 import com.lulo.users.UsuarioRepository;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,18 +23,23 @@ import java.util.HashSet;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class EmpresaService {
 
     private static final String POOL_DEFAULT_NOMBRE = "Principal";
     private static final String ROL_ADMIN_NOMBRE    = "Administrador";
 
-    private final EmpresaRepository        empresaRepository;
-    private final UsuarioRepository        usuarioRepository;
-    private final PoolRepository           poolRepository;
-    private final PermisoRepository        permisoRepository;
-    private final RolPoolRepository        rolPoolRepository;
-    private final UsuarioRolPoolRepository usuarioRolPoolRepository;
+    @Autowired
+    private EmpresaRepository        empresaRepository;
+    @Autowired
+    private UsuarioRepository        usuarioRepository;
+    @Autowired
+    private PoolRepository           poolRepository;
+    @Autowired
+    private PermisoRepository        permisoRepository;
+    @Autowired
+    private RolPoolRepository        rolPoolRepository;
+    @Autowired
+    private UsuarioRolPoolRepository usuarioRolPoolRepository;
 
     @Transactional
     public RegistroEmpresaResponse registrar(RegistroEmpresaRequest request) {
