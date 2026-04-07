@@ -56,4 +56,4 @@ Cada empresa contará con sus **propios usuarios**, y los procesos creados o ges
 - Autenticación de usuarios.
 - CRUD de procesos (crear, consultar, actualizar, eliminar).
 - Organización de procesos (por ejemplo: carpetas, etiquetas, estados, o versiones; según definición del equipo).
-- Visualización del proceso (diagrama o estructura, según el formato definido).
+- Visualización del proceso (diagrama o estructura, según el formato definido)..
