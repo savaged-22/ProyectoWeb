@@ -55,43 +55,43 @@ public class MensajeService {
         mensaje.setPayloadJson(request.getPayloadJson());
         mensaje.setCorrelationKey(request.getCorrelationKey());
         mensaje.setEstado("pendiente");
-        mensaje = mensajeRepository.save(mensaje);
+        MensajeProceso mensajeGuardado = mensajeRepository.save(mensaje);
 
         // HU-28: correlación — buscar suscripciones que coincidan
         List<SuscripcionMensaje> suscripciones = resolverSuscripciones(
-                empresa.getId(), mensaje.getNombreMensaje(), mensaje.getCorrelationKey());
+                empresa.getId(), mensajeGuardado.getNombreMensaje(), mensajeGuardado.getCorrelationKey());
 
         List<EntregaMensaje> entregas = suscripciones.stream()
-                .map(suscripcion -> crearEntrega(mensaje, suscripcion))
+                .map(suscripcion -> crearEntrega(mensajeGuardado, suscripcion))
                 .toList();
         entregaRepository.saveAll(entregas);
 
         // Marcar como entregado si hay al menos una suscripción
         if (!entregas.isEmpty()) {
-            mensaje.setEstado("entregado");
-            mensaje.setDeliveredAt(LocalDateTime.now());
-            mensaje = mensajeRepository.save(mensaje);
+            mensajeGuardado.setEstado("entregado");
+            mensajeGuardado.setDeliveredAt(LocalDateTime.now());
+            mensajeRepository.save(mensajeGuardado);
         }
 
         // HU-26: disparar notificaciones externas
-        notificacionExternaService.disparar(mensaje);
+        notificacionExternaService.disparar(mensajeGuardado);
 
         auditService.registrar(
                 empresa,
                 procesoOrigen.getCreatedByUser(),
                 "MENSAJE_PROCESO",
-                mensaje.getId(),
+                mensajeGuardado.getId(),
                 "CREAR",
                 null,
                 Map.of(
-                        "nombreMensaje", mensaje.getNombreMensaje(),
-                        "correlationKey", mensaje.getCorrelationKey() != null ? mensaje.getCorrelationKey() : "",
+                        "nombreMensaje", mensajeGuardado.getNombreMensaje(),
+                        "correlationKey", mensajeGuardado.getCorrelationKey() != null ? mensajeGuardado.getCorrelationKey() : "",
                         "entregasGeneradas", entregas.size()
                 )
         );
 
-        List<EntregaMensaje> entregasGuardadas = entregaRepository.findByMensajeId(mensaje.getId());
-        return toResponse(mensaje, entregasGuardadas);
+        List<EntregaMensaje> entregasGuardadas = entregaRepository.findByMensajeId(mensajeGuardado.getId());
+        return toResponse(mensajeGuardado, entregasGuardadas);
     }
 
     // ------------------------------------------------------------------
