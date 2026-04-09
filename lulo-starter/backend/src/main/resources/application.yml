@@ -30,7 +30,17 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
 app:
   jwt:
-    secret: ${JWT_SECRET}
+    # JWT no implementado aún — valor por defecto evita fallo al arrancar
+    secret: ${JWT_SECRET:disabled}
     expirationMinutes: ${JWT_EXPIRATION_MINUTES:120}

@@ -1,5 +1,6 @@
 services:
 
+  # ── Base de datos local (solo para desarrollo sin DB remota) ──────────────
   db:
     profiles: ["local-db"]
     image: postgres:16-alpine
@@ -19,17 +20,27 @@ services:
     networks:
       - lulo-net
 
+  # ── Backend monolítico Spring Boot ────────────────────────────────────────
+  # network_mode: host → el contenedor usa la red del host directamente,
+  # lo que le permite alcanzar IPs externas igual que el host (fix WSL2).
+  # Con host mode: 'ports' se ignora (8080 queda expuesto directo en el host)
+  #                'networks' no es compatible y debe omitirse.
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    ports:
-      - "${SERVER_PORT:-8080}:8080"
     env_file:
       - remote-db.env
-    networks:
-      - lulo-net
+    restart: on-failure
+    network_mode: host
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/swagger-ui/index.html > /dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 40s
 
+  # ── Frontend Angular servido por nginx ────────────────────────────────────
   frontend:
     build:
       context: ./frontend
@@ -41,18 +52,47 @@ services:
     networks:
       - lulo-net
 
+  # ── PostgreSQL exclusivo para SonarQube (no comparte la DB de la app) ────
+  sonar-db:
+    profiles: ["sonar"]
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+      POSTGRES_DB: sonarqube
+    volumes:
+      - sonar_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sonar -d sonarqube"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lulo-net
+
+  # ── SonarQube (solo con perfil sonar) ────────────────────────────────────
+  # Requisito del host antes de levantar:
+  #   sudo sysctl -w vm.max_map_count=262144
   sonarqube:
     profiles: ["sonar"]
     image: sonarqube:10-community
+    depends_on:
+      sonar-db:
+        condition: service_healthy
     ports:
       - "9000:9000"
     environment:
-      SONAR_JDBC_URL: ${SPRING_DATASOURCE_URL}
-      SONAR_JDBC_USERNAME: ${SPRING_DATASOURCE_USERNAME}
-      SONAR_JDBC_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SONAR_JDBC_URL: jdbc:postgresql://sonar-db:5432/sonarqube
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     volumes:
       - sonar_data:/opt/sonarqube/data
       - sonar_logs:/opt/sonarqube/logs
+      - sonar_extensions:/opt/sonarqube/extensions
     networks:
       - lulo-net
 
@@ -62,5 +102,7 @@ networks:
 
 volumes:
   db_data:
+  sonar_db_data:
   sonar_data:
   sonar_logs:
+  sonar_extensions:
