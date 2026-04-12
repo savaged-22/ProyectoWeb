@@ -15,6 +15,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/procesos")
 @RequiredArgsConstructor
@@ -28,7 +30,7 @@ public class ProcesoController {
             summary = "Listar procesos",
             description = "Lista paginada con filtros opcionales por estado, categoría y nombre")
     public Page<ProcesoResponse> listar(
-            @RequestParam Integer empresaId,
+            @RequestParam UUID empresaId,
             @RequestParam Integer usuarioId,
             @RequestParam(required = false) String estado,
             @RequestParam(required = false) String categoria,
@@ -43,7 +45,7 @@ public class ProcesoController {
             description = "Retorna el proceso y todos sus elementos del diagrama: lanes, nodos y arcos")
     public ProcesoDetalleResponse obtener(
             @PathVariable Integer id,
-            @RequestParam Integer empresaId,
+            @RequestParam UUID empresaId,
             @RequestParam Integer usuarioId) {
         return procesoService.obtener(id, empresaId, usuarioId);
     }

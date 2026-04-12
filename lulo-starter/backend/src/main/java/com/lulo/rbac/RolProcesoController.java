@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/roles-proceso")
@@ -34,7 +35,7 @@ public class RolProcesoController {
     @Operation(
             summary = "Consultar roles de proceso",
             description = "Lista los roles funcionales activos o inactivos de una empresa")
-    public List<RolProcesoResponse> listar(@RequestParam Integer empresaId,
+    public List<RolProcesoResponse> listar(@RequestParam UUID empresaId,
                                            @RequestParam Integer usuarioId,
                                            @RequestParam(defaultValue = "true") Boolean soloActivos) {
         return rolProcesoService.listar(empresaId, usuarioId, soloActivos);

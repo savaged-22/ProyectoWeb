@@ -27,6 +27,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -35,6 +36,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("PoolService - Pruebas unitarias")
 class PoolServiceTest {
+    private static final UUID EMPRESA_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
     @Mock private PoolRepository           poolRepository;
     @Mock private EmpresaRepository        empresaRepository;
@@ -53,7 +55,7 @@ class PoolServiceTest {
     @BeforeEach
     void setUp() {
         empresa = new Empresa();
-        ReflectionTestUtils.setField(empresa, "id", 1);
+        ReflectionTestUtils.setField(empresa, "id", EMPRESA_ID);
         empresa.setNombre("Empresa Test");
 
         usuario = new Usuario();
@@ -67,7 +69,7 @@ class PoolServiceTest {
     @Test
     @DisplayName("crear: caso exitoso devuelve PoolResponse con nombre y empresa correctos")
     void crear_exitoso() {
-        CrearPoolRequest request = new CrearPoolRequest(1, 1, "Desarrollo", null);
+        CrearPoolRequest request = new CrearPoolRequest(EMPRESA_ID, 1, "Desarrollo", null);
 
         Pool poolGuardado = new Pool();
         ReflectionTestUtils.setField(poolGuardado, "id", 10);
@@ -78,10 +80,10 @@ class PoolServiceTest {
         ReflectionTestUtils.setField(rolGuardado, "id", 1);
         rolGuardado.setPool(poolGuardado);
 
-        when(empresaRepository.findById(1)).thenReturn(Optional.of(empresa));
-        when(poolPermissionService.requireUsuarioDeEmpresa(1, 1)).thenReturn(usuario);
-        doNothing().when(poolPermissionService).requirePermisoEnEmpresa(1, 1, "POOL_ADMINISTRAR");
-        when(poolRepository.existsByNombreAndEmpresaId("Desarrollo", 1)).thenReturn(false);
+        when(empresaRepository.findById(EMPRESA_ID)).thenReturn(Optional.of(empresa));
+        when(poolPermissionService.requireUsuarioDeEmpresa(1, EMPRESA_ID)).thenReturn(usuario);
+        doNothing().when(poolPermissionService).requirePermisoEnEmpresa(1, EMPRESA_ID, "POOL_ADMINISTRAR");
+        when(poolRepository.existsByNombreAndEmpresaId("Desarrollo", EMPRESA_ID)).thenReturn(false);
         when(poolRepository.save(any())).thenReturn(poolGuardado);
         when(permisoRepository.findAll()).thenReturn(List.of(new Permiso()));
         when(rolPoolRepository.save(any())).thenReturn(rolGuardado);
@@ -93,7 +95,7 @@ class PoolServiceTest {
         assertThat(response).isNotNull();
         assertThat(response.getId()).isEqualTo(10);
         assertThat(response.getNombre()).isEqualTo("Desarrollo");
-        assertThat(response.getEmpresaId()).isEqualTo(1);
+        assertThat(response.getEmpresaId()).isEqualTo(EMPRESA_ID);
         verify(poolRepository).save(any(Pool.class));
         verify(rolPoolRepository).save(any(RolPool.class));
     }
@@ -101,8 +103,9 @@ class PoolServiceTest {
     @Test
     @DisplayName("crear: empresa no encontrada lanza ApiException 404")
     void crear_empresaNoEncontrada_lanzaNotFound() {
-        CrearPoolRequest request = new CrearPoolRequest(99, 1, "Pool", null);
-        when(empresaRepository.findById(99)).thenReturn(Optional.empty());
+        UUID empresaInexistente = UUID.fromString("99999999-9999-9999-9999-999999999999");
+        CrearPoolRequest request = new CrearPoolRequest(empresaInexistente, 1, "Pool", null);
+        when(empresaRepository.findById(empresaInexistente)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> poolService.crear(request))
                 .isInstanceOf(ApiException.class)
@@ -116,12 +119,12 @@ class PoolServiceTest {
     @Test
     @DisplayName("crear: nombre duplicado en la empresa lanza ApiException 409")
     void crear_nombreDuplicado_lanzaConflict() {
-        CrearPoolRequest request = new CrearPoolRequest(1, 1, "Desarrollo", null);
+        CrearPoolRequest request = new CrearPoolRequest(EMPRESA_ID, 1, "Desarrollo", null);
 
-        when(empresaRepository.findById(1)).thenReturn(Optional.of(empresa));
-        when(poolPermissionService.requireUsuarioDeEmpresa(1, 1)).thenReturn(usuario);
-        doNothing().when(poolPermissionService).requirePermisoEnEmpresa(1, 1, "POOL_ADMINISTRAR");
-        when(poolRepository.existsByNombreAndEmpresaId("Desarrollo", 1)).thenReturn(true);
+        when(empresaRepository.findById(EMPRESA_ID)).thenReturn(Optional.of(empresa));
+        when(poolPermissionService.requireUsuarioDeEmpresa(1, EMPRESA_ID)).thenReturn(usuario);
+        doNothing().when(poolPermissionService).requirePermisoEnEmpresa(1, EMPRESA_ID, "POOL_ADMINISTRAR");
+        when(poolRepository.existsByNombreAndEmpresaId("Desarrollo", EMPRESA_ID)).thenReturn(true);
 
         assertThatThrownBy(() -> poolService.crear(request))
                 .isInstanceOf(ApiException.class)
@@ -135,11 +138,11 @@ class PoolServiceTest {
     @Test
     @DisplayName("crear: nombre en blanco lanza ApiException 400")
     void crear_nombreBlanco_lanzaBadRequest() {
-        CrearPoolRequest request = new CrearPoolRequest(1, 1, "   ", null);
+        CrearPoolRequest request = new CrearPoolRequest(EMPRESA_ID, 1, "   ", null);
 
-        when(empresaRepository.findById(1)).thenReturn(Optional.of(empresa));
-        when(poolPermissionService.requireUsuarioDeEmpresa(1, 1)).thenReturn(usuario);
-        doNothing().when(poolPermissionService).requirePermisoEnEmpresa(1, 1, "POOL_ADMINISTRAR");
+        when(empresaRepository.findById(EMPRESA_ID)).thenReturn(Optional.of(empresa));
+        when(poolPermissionService.requireUsuarioDeEmpresa(1, EMPRESA_ID)).thenReturn(usuario);
+        doNothing().when(poolPermissionService).requirePermisoEnEmpresa(1, EMPRESA_ID, "POOL_ADMINISTRAR");
 
         assertThatThrownBy(() -> poolService.crear(request))
                 .isInstanceOf(ApiException.class)
@@ -152,7 +155,7 @@ class PoolServiceTest {
     @Test
     @DisplayName("crear: el rol administrador creado es propietario y tiene todos los permisos del catálogo")
     void crear_rolAdmin_esPropietarioConTodosLosPermisos() {
-        CrearPoolRequest request = new CrearPoolRequest(1, 1, "QA", null);
+        CrearPoolRequest request = new CrearPoolRequest(EMPRESA_ID, 1, "QA", null);
 
         Pool poolGuardado = new Pool();
         ReflectionTestUtils.setField(poolGuardado, "id", 1);
@@ -162,8 +165,8 @@ class PoolServiceTest {
         Permiso p1 = new Permiso(); Permiso p2 = new Permiso();
         List<Permiso> permisos = List.of(p1, p2);
 
-        when(empresaRepository.findById(1)).thenReturn(Optional.of(empresa));
-        when(poolPermissionService.requireUsuarioDeEmpresa(1, 1)).thenReturn(usuario);
+        when(empresaRepository.findById(EMPRESA_ID)).thenReturn(Optional.of(empresa));
+        when(poolPermissionService.requireUsuarioDeEmpresa(1, EMPRESA_ID)).thenReturn(usuario);
         doNothing().when(poolPermissionService).requirePermisoEnEmpresa(any(), any(), any());
         when(poolRepository.existsByNombreAndEmpresaId(any(), any())).thenReturn(false);
         when(poolRepository.save(any())).thenReturn(poolGuardado);
@@ -202,9 +205,9 @@ class PoolServiceTest {
         EditarPoolRequest request = new EditarPoolRequest(1, "Nuevo Nombre", null);
 
         when(poolRepository.findById(1)).thenReturn(Optional.of(poolExistente));
-        when(poolPermissionService.requireUsuarioDeEmpresa(1, 1)).thenReturn(usuario);
+        when(poolPermissionService.requireUsuarioDeEmpresa(1, EMPRESA_ID)).thenReturn(usuario);
         doNothing().when(poolPermissionService).requirePermisoEnPool(1, 1, "POOL_ADMINISTRAR");
-        when(poolRepository.existsByNombreAndEmpresaId("Nuevo Nombre", 1)).thenReturn(false);
+        when(poolRepository.existsByNombreAndEmpresaId("Nuevo Nombre", EMPRESA_ID)).thenReturn(false);
         when(poolRepository.save(any())).thenReturn(poolActualizado);
         doNothing().when(auditService).registrar(any(), any(), any(), any(), any(), any(), any());
 
@@ -240,9 +243,9 @@ class PoolServiceTest {
         EditarPoolRequest request = new EditarPoolRequest(1, "Nombre Duplicado", null);
 
         when(poolRepository.findById(1)).thenReturn(Optional.of(poolExistente));
-        when(poolPermissionService.requireUsuarioDeEmpresa(1, 1)).thenReturn(usuario);
+        when(poolPermissionService.requireUsuarioDeEmpresa(1, EMPRESA_ID)).thenReturn(usuario);
         doNothing().when(poolPermissionService).requirePermisoEnPool(any(), any(), any());
-        when(poolRepository.existsByNombreAndEmpresaId("Nombre Duplicado", 1)).thenReturn(true);
+        when(poolRepository.existsByNombreAndEmpresaId("Nombre Duplicado", EMPRESA_ID)).thenReturn(true);
 
         assertThatThrownBy(() -> poolService.editar(1, request))
                 .isInstanceOf(ApiException.class)

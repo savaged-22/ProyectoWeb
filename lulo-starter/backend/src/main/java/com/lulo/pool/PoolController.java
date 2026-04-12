@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/pools")
@@ -22,7 +23,7 @@ public class PoolController {
 
     @GetMapping
     @Operation(summary = "Listar pools", description = "Lista los pools de una empresa")
-    public List<PoolResponse> listar(@RequestParam Integer empresaId, @RequestParam Integer usuarioId) {
+    public List<PoolResponse> listar(@RequestParam UUID empresaId, @RequestParam Integer usuarioId) {
         return poolService.listar(empresaId, usuarioId);
     }
 

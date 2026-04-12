@@ -6,13 +6,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class CrearPoolRequest {
 
     @NotNull(message = "La empresa es obligatoria")
-    private Integer empresaId;
+    private UUID empresaId;
 
     @NotNull(message = "El usuario creador es obligatorio")
     private Integer creadoPorId;

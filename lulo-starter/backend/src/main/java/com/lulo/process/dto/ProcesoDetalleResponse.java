@@ -8,6 +8,7 @@ import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Builder
@@ -15,7 +16,7 @@ public class ProcesoDetalleResponse {
 
     // ── Datos del proceso ─────────────────────────────────────────────────────
     private Integer       id;
-    private Integer       empresaId;
+    private UUID          empresaId;
     private String        empresaNombre;
     private Integer       poolId;
     private String        poolNombre;

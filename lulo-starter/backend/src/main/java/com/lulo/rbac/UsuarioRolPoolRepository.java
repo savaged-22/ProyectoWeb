@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface UsuarioRolPoolRepository extends JpaRepository<UsuarioRolPool, UsuarioRolPoolId> {
 
@@ -42,5 +43,5 @@ public interface UsuarioRolPoolRepository extends JpaRepository<UsuarioRolPool, 
             """)
     List<UsuarioRolPool> findByUsuarioIdAndEmpresaId(
             @Param("usuarioId") Integer usuarioId,
-            @Param("empresaId") Integer empresaId);
+            @Param("empresaId") UUID empresaId);
 }

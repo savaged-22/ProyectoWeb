@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +42,7 @@ public class PoolService {
     private final AuditService auditService;
 
     @Transactional(readOnly = true)
-    public List<PoolResponse> listar(Integer empresaId, Integer usuarioId) {
+    public List<PoolResponse> listar(UUID empresaId, Integer usuarioId) {
         poolPermissionService.requirePermisoEnEmpresa(usuarioId, empresaId, "POOL_ADMINISTRAR");
         return poolRepository.findByEmpresaIdOrderByNombreAsc(empresaId).stream()
                 .map(PoolService::toResponse)

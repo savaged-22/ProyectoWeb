@@ -5,12 +5,14 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Getter
 @Setter
 public class RegistrarSuscripcionRequest {
 
     @NotNull
-    private Integer empresaId;
+    private UUID empresaId;
 
     @NotBlank
     private String nombreMensaje;

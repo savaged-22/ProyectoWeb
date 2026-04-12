@@ -26,6 +26,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -34,6 +35,8 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ProcesoService - Pruebas unitarias")
 class ProcesoServiceTest {
+    private static final UUID EMPRESA_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
+    private static final UUID OTRA_EMPRESA_ID = UUID.fromString("22222222-2222-2222-2222-222222222222");
 
     @Mock private ProcesoRepository          procesoRepository;
     @Mock private EmpresaRepository          empresaRepository;
@@ -54,7 +57,7 @@ class ProcesoServiceTest {
     @BeforeEach
     void setUp() {
         empresa = new Empresa();
-        ReflectionTestUtils.setField(empresa, "id", 1);
+        ReflectionTestUtils.setField(empresa, "id", EMPRESA_ID);
         empresa.setNombre("Empresa Test");
 
         pool = new Pool();
@@ -73,11 +76,11 @@ class ProcesoServiceTest {
     @Test
     @DisplayName("crear: caso exitoso devuelve ProcesoResponse con datos correctos")
     void crear_exitoso() {
-        CrearProcesoRequest request = new CrearProcesoRequest(1, 1, 1, "Mi Proceso", "Descripción", "categoria", "borrador");
+        CrearProcesoRequest request = new CrearProcesoRequest(EMPRESA_ID, 1, 1, "Mi Proceso", "Descripción", "categoria", "borrador");
 
         Proceso procesoGuardado = buildProceso(10, "Mi Proceso", "borrador");
 
-        when(empresaRepository.findById(1)).thenReturn(Optional.of(empresa));
+        when(empresaRepository.findById(EMPRESA_ID)).thenReturn(Optional.of(empresa));
         when(poolRepository.findById(1)).thenReturn(Optional.of(pool));
         when(usuarioRepository.findById(1)).thenReturn(Optional.of(usuario));
         doNothing().when(poolPermissionService).requirePermisoEnPool(1, 1, "PROCESO_CREAR");
@@ -95,8 +98,9 @@ class ProcesoServiceTest {
     @Test
     @DisplayName("crear: empresa no encontrada lanza ApiException 404")
     void crear_empresaNoEncontrada_lanzaNotFound() {
-        CrearProcesoRequest request = new CrearProcesoRequest(99, 1, 1, "Proceso", null, null, null);
-        when(empresaRepository.findById(99)).thenReturn(Optional.empty());
+        UUID empresaInexistente = UUID.fromString("99999999-9999-9999-9999-999999999999");
+        CrearProcesoRequest request = new CrearProcesoRequest(empresaInexistente, 1, 1, "Proceso", null, null, null);
+        when(empresaRepository.findById(empresaInexistente)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> procesoService.crear(request))
                 .isInstanceOf(ApiException.class)
@@ -110,8 +114,8 @@ class ProcesoServiceTest {
     @Test
     @DisplayName("crear: pool no encontrado lanza ApiException 404")
     void crear_poolNoEncontrado_lanzaNotFound() {
-        CrearProcesoRequest request = new CrearProcesoRequest(1, 99, 1, "Proceso", null, null, null);
-        when(empresaRepository.findById(1)).thenReturn(Optional.of(empresa));
+        CrearProcesoRequest request = new CrearProcesoRequest(EMPRESA_ID, 99, 1, "Proceso", null, null, null);
+        when(empresaRepository.findById(EMPRESA_ID)).thenReturn(Optional.of(empresa));
         when(poolRepository.findById(99)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> procesoService.crear(request))
@@ -127,13 +131,13 @@ class ProcesoServiceTest {
     @DisplayName("crear: pool de otra empresa lanza ApiException 403")
     void crear_poolDeOtraEmpresa_lanzaForbidden() {
         Empresa otraEmpresa = new Empresa();
-        ReflectionTestUtils.setField(otraEmpresa, "id", 2);
+        ReflectionTestUtils.setField(otraEmpresa, "id", OTRA_EMPRESA_ID);
         Pool poolAjeno = new Pool();
         poolAjeno.setEmpresa(otraEmpresa);
         ReflectionTestUtils.setField(poolAjeno, "id", 5);
 
-        CrearProcesoRequest request = new CrearProcesoRequest(1, 5, 1, "Proceso", null, null, null);
-        when(empresaRepository.findById(1)).thenReturn(Optional.of(empresa));
+        CrearProcesoRequest request = new CrearProcesoRequest(EMPRESA_ID, 5, 1, "Proceso", null, null, null);
+        when(empresaRepository.findById(EMPRESA_ID)).thenReturn(Optional.of(empresa));
         when(poolRepository.findById(5)).thenReturn(Optional.of(poolAjeno));
 
         assertThatThrownBy(() -> procesoService.crear(request))
@@ -148,13 +152,13 @@ class ProcesoServiceTest {
     @DisplayName("crear: usuario de otra empresa lanza ApiException 403")
     void crear_usuarioDeOtraEmpresa_lanzaForbidden() {
         Empresa otraEmpresa = new Empresa();
-        ReflectionTestUtils.setField(otraEmpresa, "id", 2);
+        ReflectionTestUtils.setField(otraEmpresa, "id", OTRA_EMPRESA_ID);
         Usuario usuarioAjeno = new Usuario();
         usuarioAjeno.setEmpresa(otraEmpresa);
         ReflectionTestUtils.setField(usuarioAjeno, "id", 5);
 
-        CrearProcesoRequest request = new CrearProcesoRequest(1, 1, 5, "Proceso", null, null, null);
-        when(empresaRepository.findById(1)).thenReturn(Optional.of(empresa));
+        CrearProcesoRequest request = new CrearProcesoRequest(EMPRESA_ID, 1, 5, "Proceso", null, null, null);
+        when(empresaRepository.findById(EMPRESA_ID)).thenReturn(Optional.of(empresa));
         when(poolRepository.findById(1)).thenReturn(Optional.of(pool));
         when(usuarioRepository.findById(5)).thenReturn(Optional.of(usuarioAjeno));
 
@@ -169,10 +173,10 @@ class ProcesoServiceTest {
     @Test
     @DisplayName("crear: estado por defecto es 'borrador' cuando no se especifica")
     void crear_estadoDefecto_esBorrador() {
-        CrearProcesoRequest request = new CrearProcesoRequest(1, 1, 1, "Proceso", null, null, null);
+        CrearProcesoRequest request = new CrearProcesoRequest(EMPRESA_ID, 1, 1, "Proceso", null, null, null);
         Proceso guardado = buildProceso(1, "Proceso", "borrador");
 
-        when(empresaRepository.findById(1)).thenReturn(Optional.of(empresa));
+        when(empresaRepository.findById(EMPRESA_ID)).thenReturn(Optional.of(empresa));
         when(poolRepository.findById(1)).thenReturn(Optional.of(pool));
         when(usuarioRepository.findById(1)).thenReturn(Optional.of(usuario));
         doNothing().when(poolPermissionService).requirePermisoEnPool(any(), any(), any());
@@ -254,7 +258,7 @@ class ProcesoServiceTest {
     @DisplayName("archivar: usuario de otra empresa lanza ApiException 403")
     void archivar_usuarioOtraEmpresa_lanzaForbidden() {
         Empresa otraEmpresa = new Empresa();
-        ReflectionTestUtils.setField(otraEmpresa, "id", 2);
+        ReflectionTestUtils.setField(otraEmpresa, "id", OTRA_EMPRESA_ID);
         Usuario usuarioAjeno = new Usuario();
         usuarioAjeno.setEmpresa(otraEmpresa);
         ReflectionTestUtils.setField(usuarioAjeno, "id", 5);

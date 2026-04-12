@@ -6,21 +6,22 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface RolProcesoRepository extends JpaRepository<RolProceso, Integer> {
 
     // Hibernate Filter activo: ya filtra por empresa automáticamente
     List<RolProceso> findByActivo(boolean activo);
 
-    boolean existsByEmpresaIdAndNombre(Integer empresaId, String nombre);
+    boolean existsByEmpresaIdAndNombre(UUID empresaId, String nombre);
 
-    boolean existsByEmpresaIdAndNombreAndActivoTrue(Integer empresaId, String nombre);
+    boolean existsByEmpresaIdAndNombreAndActivoTrue(UUID empresaId, String nombre);
 
-    List<RolProceso> findByEmpresaIdOrderByNombreAsc(Integer empresaId);
+    List<RolProceso> findByEmpresaIdOrderByNombreAsc(UUID empresaId);
 
-    List<RolProceso> findByEmpresaIdAndActivoTrueOrderByNombreAsc(Integer empresaId);
+    List<RolProceso> findByEmpresaIdAndActivoTrueOrderByNombreAsc(UUID empresaId);
 
-    List<RolProceso> findByEmpresaIdAndActivoOrderByNombreAsc(Integer empresaId, boolean activo);
+    List<RolProceso> findByEmpresaIdAndActivoOrderByNombreAsc(UUID empresaId, boolean activo);
 
     Optional<RolProceso> findByIdAndActivoTrue(Integer id);
 
@@ -32,7 +33,7 @@ public interface RolProcesoRepository extends JpaRepository<RolProceso, Integer>
               AND r.activo = true
               AND r.id <> :rolProcesoId
             """)
-    boolean existsActivoByEmpresaIdAndNombreExcluyendoId(@Param("empresaId") Integer empresaId,
+    boolean existsActivoByEmpresaIdAndNombreExcluyendoId(@Param("empresaId") UUID empresaId,
                                                          @Param("nombre") String nombre,
                                                          @Param("rolProcesoId") Integer rolProcesoId);
 

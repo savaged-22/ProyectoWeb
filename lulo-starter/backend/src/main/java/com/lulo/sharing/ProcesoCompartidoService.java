@@ -19,6 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -114,7 +115,7 @@ public class ProcesoCompartidoService {
     }
 
     @Transactional(readOnly = true)
-    public List<Proceso> findProcesosCompartidosVisibles(Integer empresaId,
+    public List<Proceso> findProcesosCompartidosVisibles(UUID empresaId,
                                                          Integer usuarioId,
                                                          String estado,
                                                          String categoria,
@@ -133,7 +134,7 @@ public class ProcesoCompartidoService {
     }
 
     @Transactional(readOnly = true)
-    public boolean puedeVer(Proceso proceso, Integer usuarioId, Integer empresaId) {
+    public boolean puedeVer(Proceso proceso, Integer usuarioId, UUID empresaId) {
         if (proceso.getEmpresa().getId().equals(empresaId) &&
                 poolPermissionService.hasPermisoEnPool(usuarioId, proceso.getPool().getId(), "PROCESO_VER")) {
             return true;
@@ -146,7 +147,7 @@ public class ProcesoCompartidoService {
     }
 
     @Transactional(readOnly = true)
-    public boolean puedeEditar(Proceso proceso, Integer usuarioId, Integer empresaId) {
+    public boolean puedeEditar(Proceso proceso, Integer usuarioId, UUID empresaId) {
         if (proceso.getEmpresa().getId().equals(empresaId) &&
                 poolPermissionService.hasPermisoEnPool(usuarioId, proceso.getPool().getId(), "PROCESO_EDITAR")) {
             return true;
@@ -160,7 +161,7 @@ public class ProcesoCompartidoService {
     }
 
     @Transactional(readOnly = true)
-    public boolean puedeEditarDiagrama(Proceso proceso, Integer usuarioId, Integer empresaId) {
+    public boolean puedeEditarDiagrama(Proceso proceso, Integer usuarioId, UUID empresaId) {
         if (proceso.getEmpresa().getId().equals(empresaId) &&
                 poolPermissionService.hasPermisoEnPool(usuarioId, proceso.getPool().getId(), "DIAGRAMA_EDITAR")) {
             return true;
@@ -174,7 +175,7 @@ public class ProcesoCompartidoService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<ProcesoCompartido> findComparticionEditable(Proceso proceso, Integer usuarioId, Integer empresaId) {
+    public Optional<ProcesoCompartido> findComparticionEditable(Proceso proceso, Integer usuarioId, UUID empresaId) {
         return procesoCompartidoRepository.findByProcesoId(proceso.getId()).stream()
                 .filter(compartido -> "edicion".equals(compartido.getPermiso()))
                 .filter(compartido -> compartido.getPoolDestino().getEmpresa().getId().equals(empresaId))

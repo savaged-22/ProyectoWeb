@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +29,7 @@ public class RolProcesoService {
     private final AuditService auditService;
 
     @Transactional(readOnly = true)
-    public List<RolProcesoResponse> listar(Integer empresaId, Integer usuarioId, Boolean soloActivos) {
+    public List<RolProcesoResponse> listar(UUID empresaId, Integer usuarioId, Boolean soloActivos) {
         poolPermissionService.requirePermisoEnEmpresa(usuarioId, empresaId, "ROL_VER");
 
         List<RolProceso> roles = Boolean.FALSE.equals(soloActivos)
@@ -140,7 +141,7 @@ public class RolProcesoService {
         );
     }
 
-    private com.lulo.users.Usuario requireUsuarioDeEmpresa(Integer usuarioId, Integer empresaId) {
+    private com.lulo.users.Usuario requireUsuarioDeEmpresa(Integer usuarioId, UUID empresaId) {
         return poolPermissionService.requireUsuarioDeEmpresa(usuarioId, empresaId);
     }
 

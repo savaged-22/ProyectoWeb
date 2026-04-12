@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +30,7 @@ public class PoolPermissionService {
     }
 
     @Transactional(readOnly = true)
-    public Usuario requireUsuarioDeEmpresa(Integer usuarioId, Integer empresaId) {
+    public Usuario requireUsuarioDeEmpresa(Integer usuarioId, UUID empresaId) {
         Usuario usuario = requireUsuario(usuarioId);
         if (!usuario.getEmpresa().getId().equals(empresaId)) {
             throw new ApiException("El usuario no pertenece a esta empresa", HttpStatus.FORBIDDEN);
@@ -38,7 +39,7 @@ public class PoolPermissionService {
     }
 
     @Transactional(readOnly = true)
-    public Pool requirePoolDeEmpresa(Integer poolId, Integer empresaId) {
+    public Pool requirePoolDeEmpresa(Integer poolId, UUID empresaId) {
         return poolRepository.findById(poolId)
                 .filter(pool -> pool.getEmpresa().getId().equals(empresaId))
                 .orElseThrow(() -> new ApiException("El pool no pertenece a esta empresa", HttpStatus.FORBIDDEN));
@@ -52,7 +53,7 @@ public class PoolPermissionService {
     }
 
     @Transactional(readOnly = true)
-    public void requirePermisoEnEmpresa(Integer usuarioId, Integer empresaId, String codigoPermiso) {
+    public void requirePermisoEnEmpresa(Integer usuarioId, UUID empresaId, String codigoPermiso) {
         requireUsuarioDeEmpresa(usuarioId, empresaId);
         if (!hasPermisoEnEmpresa(usuarioId, empresaId, codigoPermiso)) {
             throw new ApiException("El usuario no tiene permiso " + codigoPermiso + " en esta empresa", HttpStatus.FORBIDDEN);
@@ -71,7 +72,7 @@ public class PoolPermissionService {
     }
 
     @Transactional(readOnly = true)
-    public boolean hasPermisoEnEmpresa(Integer usuarioId, Integer empresaId, String codigoPermiso) {
+    public boolean hasPermisoEnEmpresa(Integer usuarioId, UUID empresaId, String codigoPermiso) {
         return usuarioRolPoolRepository.findByUsuarioIdAndEmpresaId(usuarioId, empresaId).stream()
                 .map(UsuarioRolPool::getRolPool)
                 .filter(RolPool::isActivo)
@@ -81,7 +82,7 @@ public class PoolPermissionService {
     }
 
     @Transactional(readOnly = true)
-    public List<Integer> getPoolIdsConPermisoEnEmpresa(Integer usuarioId, Integer empresaId, String codigoPermiso) {
+    public List<Integer> getPoolIdsConPermisoEnEmpresa(Integer usuarioId, UUID empresaId, String codigoPermiso) {
         Set<Integer> poolIds = new LinkedHashSet<>();
         usuarioRolPoolRepository.findByUsuarioIdAndEmpresaId(usuarioId, empresaId).stream()
                 .map(UsuarioRolPool::getRolPool)
@@ -93,7 +94,7 @@ public class PoolPermissionService {
     }
 
     @Transactional(readOnly = true)
-    public List<Integer> getPoolIdsAsignadosEnEmpresa(Integer usuarioId, Integer empresaId) {
+    public List<Integer> getPoolIdsAsignadosEnEmpresa(Integer usuarioId, UUID empresaId) {
         Set<Integer> poolIds = new LinkedHashSet<>();
         usuarioRolPoolRepository.findByUsuarioIdAndEmpresaId(usuarioId, empresaId).stream()
                 .map(UsuarioRolPool::getRolPool)

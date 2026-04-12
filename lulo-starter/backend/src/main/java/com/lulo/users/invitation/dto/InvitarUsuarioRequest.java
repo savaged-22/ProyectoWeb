@@ -7,13 +7,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class InvitarUsuarioRequest {
 
     @NotNull(message = "La empresa es obligatoria")
-    private Integer empresaId;
+    private UUID empresaId;
 
     @NotNull(message = "El pool es obligatorio")
     private Integer rolPoolId;

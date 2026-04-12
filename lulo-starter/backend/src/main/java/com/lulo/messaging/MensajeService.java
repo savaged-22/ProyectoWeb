@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * HU-25: Enviar mensaje entre procesos (Message Throw)
@@ -178,9 +179,9 @@ public class MensajeService {
      * Si el mensaje tiene correlationKey → solo suscripciones con la misma clave.
      * Si el mensaje no tiene correlationKey → todas las suscripciones del nombre.
      */
-    private List<SuscripcionMensaje> resolverSuscripciones(Integer empresaId,
-                                                            String nombreMensaje,
-                                                            String correlationKey) {
+    private List<SuscripcionMensaje> resolverSuscripciones(UUID empresaId,
+                                                           String nombreMensaje,
+                                                           String correlationKey) {
         List<SuscripcionMensaje> candidatas =
                 suscripcionRepository.findByEmpresaIdAndNombreMensajeAndActivoTrue(empresaId, nombreMensaje);
 

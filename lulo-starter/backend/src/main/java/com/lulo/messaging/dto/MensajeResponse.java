@@ -5,13 +5,14 @@ import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Builder
 public class MensajeResponse {
 
     private Integer id;
-    private Integer empresaId;
+    private UUID empresaId;
     private Integer procesoOrigenId;
     private String nombreMensaje;
     private String payloadJson;

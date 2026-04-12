@@ -6,12 +6,14 @@ import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Getter
 @Setter
 public class RegistrarNotificacionExternaRequest {
 
     @NotNull
-    private Integer empresaId;
+    private UUID empresaId;
 
     @NotBlank
     private String nombreMensaje;

@@ -31,6 +31,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -48,7 +49,7 @@ public class ProcesoService {
     // ── Listar con filtros ────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public Page<ProcesoResponse> listar(Integer empresaId,
+    public Page<ProcesoResponse> listar(UUID empresaId,
                                         Integer usuarioId,
                                         String estado,
                                         String categoria,
@@ -89,7 +90,7 @@ public class ProcesoService {
     // ── Obtener detalle con diagrama ──────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public ProcesoDetalleResponse obtener(Integer procesoId, Integer empresaId, Integer usuarioId) {
+    public ProcesoDetalleResponse obtener(Integer procesoId, UUID empresaId, Integer usuarioId) {
         poolPermissionService.requireUsuarioDeEmpresa(usuarioId, empresaId);
 
         Proceso proceso = procesoRepository.findByIdAndActivoTrue(procesoId)

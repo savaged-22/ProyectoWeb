@@ -42,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -505,7 +506,7 @@ public class DiagramService {
         return lane;
     }
 
-    private RolProceso resolveRolProceso(Integer empresaId, Integer rolProcesoId) {
+    private RolProceso resolveRolProceso(UUID empresaId, Integer rolProcesoId) {
         if (rolProcesoId == null) {
             return null;
         }

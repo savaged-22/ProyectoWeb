@@ -24,6 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -32,6 +33,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("EmpresaService - Pruebas unitarias")
 class EmpresaServiceTest {
+    private static final UUID EMPRESA_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
     @Mock private EmpresaRepository        empresaRepository;
     @Mock private UsuarioRepository        usuarioRepository;
@@ -64,7 +66,7 @@ class EmpresaServiceTest {
     void registrar_exitoso() {
         // Arrange
         Empresa empresaGuardada = new Empresa();
-        ReflectionTestUtils.setField(empresaGuardada, "id", 1);
+        ReflectionTestUtils.setField(empresaGuardada, "id", EMPRESA_ID);
         empresaGuardada.setNombre("Empresa Demo SAS");
         empresaGuardada.setNit("900111222-1");
 
@@ -93,7 +95,7 @@ class EmpresaServiceTest {
 
         // Assert
         assertThat(response).isNotNull();
-        assertThat(response.getEmpresaId()).isEqualTo(1);
+        assertThat(response.getEmpresaId()).isEqualTo(EMPRESA_ID);
         assertThat(response.getEmpresaNombre()).isEqualTo("Empresa Demo SAS");
         assertThat(response.getUsuarioId()).isEqualTo(1);
         assertThat(response.getEmailAdmin()).isEqualTo("admin@demo.com");
@@ -150,7 +152,7 @@ class EmpresaServiceTest {
     @DisplayName("Pool creado debe llamarse 'Principal'")
     void registrar_poolDefecto_nombrePrincipal() {
         Empresa e = new Empresa();
-        ReflectionTestUtils.setField(e, "id", 1);
+        ReflectionTestUtils.setField(e, "id", EMPRESA_ID);
         Usuario u = new Usuario();
         ReflectionTestUtils.setField(u, "id", 1);
         u.setEmail("admin@demo.com");
@@ -181,7 +183,7 @@ class EmpresaServiceTest {
     @DisplayName("Rol administrador se crea como propietario con todos los permisos del catálogo")
     void registrar_rolAdmin_esPropietarioConTodosLosPermisos() {
         Empresa e = new Empresa();
-        ReflectionTestUtils.setField(e, "id", 1);
+        ReflectionTestUtils.setField(e, "id", EMPRESA_ID);
         Usuario u = new Usuario();
         ReflectionTestUtils.setField(u, "id", 1);
         u.setEmail("admin@demo.com");
