@@ -19,4 +19,6 @@ public interface ProcesoRepository extends JpaRepository<Proceso, Integer>,
     Optional<Proceso> findByIdAndActivoTrue(Integer id);
 
     boolean existsByPoolIdAndNombre(Integer poolId, String nombre);
+
+    List<Proceso> findByEmpresaId(Integer empresaId);
 }

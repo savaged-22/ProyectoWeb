@@ -70,6 +70,45 @@ services:
     networks:
       - lulo-net
 
+  # ── InfluxDB: recibe métricas de JMeter en tiempo real ───────────────────
+  influxdb:
+    profiles: ["monitoring"]
+    image: influxdb:1.8-alpine
+    ports:
+      - "8086:8086"
+    environment:
+      INFLUXDB_DB: jmeter
+      INFLUXDB_USER: jmeter
+      INFLUXDB_USER_PASSWORD: jmeter123
+      INFLUXDB_ADMIN_ENABLED: "true"
+    volumes:
+      - influxdb_data:/var/lib/influxdb
+    healthcheck:
+      test: ["CMD-SHELL", "influx -execute 'SHOW DATABASES' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lulo-net
+
+  # ── Grafana: dashboard visual de carga (tiempo real) ─────────────────────
+  grafana:
+    profiles: ["monitoring"]
+    image: grafana/grafana:10.4.2
+    ports:
+      - "3000:3000"
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_DATASOURCES_DEFAULT_NAME: InfluxDB
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - lulo-net
+
   # ── SonarQube (solo con perfil sonar) ────────────────────────────────────
   # Requisito del host antes de levantar:
   #   sudo sysctl -w vm.max_map_count=262144
@@ -106,3 +145,5 @@ volumes:
   sonar_data:
   sonar_logs:
   sonar_extensions:
+  influxdb_data:
+  grafana_data:
