@@ -37,7 +37,7 @@ jobs:
 
       - name: Run tests
         working-directory: lulo-starter/backend
-        run: mvn clean verify
+        run: mvn clean verify -DskipJmeter=true
 
       - name: Upload test results
         if: always()
@@ -125,6 +125,42 @@ jobs:
       - name: Wait for rollout
         run: |
           sudo microk8s kubectl rollout status deployment/proyectoweb-backend \
-            -n ${{ env.K8S_NAMESPACE }} --timeout=120s
+            -n ${{ env.K8S_NAMESPACE }} --timeout=300s
           sudo microk8s kubectl rollout status deployment/proyectoweb-frontend \
-            -n ${{ env.K8S_NAMESPACE }} --timeout=120s
+            -n ${{ env.K8S_NAMESPACE }} --timeout=300s
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 4: Pruebas de carga JMeter (self-hosted, post-deploy)
+  # ──────────────────────────────────────────────────────────────
+  jmeter:
+    name: JMeter Load Tests
+    runs-on: main
+    needs: deploy-onpremise
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('lulo-starter/backend/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-
+
+      - name: Run JMeter tests
+        working-directory: lulo-starter/backend
+        run: mvn jmeter:configure jmeter:jmeter jmeter:results
+
+      - name: Upload JMeter results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jmeter-results
+          path: lulo-starter/backend/target/jmeter/results/
