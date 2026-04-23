@@ -21,10 +21,6 @@ services:
       - lulo-net
 
   # ── Backend monolítico Spring Boot ────────────────────────────────────────
-  # network_mode: host → el contenedor usa la red del host directamente,
-  # lo que le permite alcanzar IPs externas igual que el host (fix WSL2).
-  # Con host mode: 'ports' se ignora (8080 queda expuesto directo en el host)
-  #                'networks' no es compatible y debe omitirse.
   backend:
     build:
       context: ./backend
@@ -32,7 +28,10 @@ services:
     env_file:
       - remote-db.env
     restart: on-failure
-    network_mode: host
+    ports:
+      - "8080:8080"
+    networks:
+      - lulo-net
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/swagger-ui/index.html > /dev/null 2>&1 || exit 1"]
       interval: 15s
@@ -40,13 +39,13 @@ services:
       retries: 6
       start_period: 40s
 
-  # ── Frontend Angular servido por nginx ────────────────────────────────────
+  # ── Frontend Angular servido con SSR (Node.js) ────────────────────────────
   frontend:
     build:
-      context: ./frontend
+      context: ./frontend_final
       dockerfile: Dockerfile
     ports:
-      - "4200:80"
+      - "4200:4000"
     depends_on:
       - backend
     networks:
