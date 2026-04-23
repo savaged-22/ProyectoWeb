@@ -159,6 +159,11 @@
         <version>3.8.0</version>
         <executions>
           <execution>
+            <id>configuration</id>
+            <phase>integration-test</phase>
+            <goals><goal>configure</goal></goals>
+          </execution>
+          <execution>
             <id>jmeter-tests</id>
             <phase>integration-test</phase>
             <goals><goal>jmeter</goal></goals>
@@ -174,6 +179,7 @@
           <resultsDirectory>${project.build.directory}/jmeter/results</resultsDirectory>
           <generateReports>true</generateReports>
           <errorRateThreshold>5</errorRateThreshold>
+          <skipTests>${skipJmeter}</skipTests>
         </configuration>
       </plugin>
     </plugins>
