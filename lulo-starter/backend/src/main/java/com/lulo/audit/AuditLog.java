@@ -1,5 +1,7 @@
 package com.lulo.audit;
 
+import java.util.UUID;
+
 import com.lulo.company.Empresa;
 import com.lulo.users.Usuario;
 import jakarta.persistence.*;
@@ -19,8 +21,8 @@ import java.time.LocalDateTime;
 public class AuditLog {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "empresa_id", nullable = false)
@@ -34,7 +36,7 @@ public class AuditLog {
     private String entidad;
 
     @Column(name = "entidad_id", nullable = false)
-    private Integer entidadId;
+    private UUID entidadId;
 
     @Column(nullable = false)
     private String accion;

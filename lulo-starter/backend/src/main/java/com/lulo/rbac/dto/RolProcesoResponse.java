@@ -1,5 +1,7 @@
 package com.lulo.rbac.dto;
 
+import java.util.UUID;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -9,8 +11,8 @@ import java.time.LocalDateTime;
 @Builder
 public class RolProcesoResponse {
 
-    private Integer id;
-    private Integer empresaId;
+    private UUID id;
+    private UUID empresaId;
     private String nombre;
     private String descripcion;
     private boolean activo;

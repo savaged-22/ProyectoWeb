@@ -1,5 +1,7 @@
 package com.lulo.messaging;
 
+import java.util.UUID;
+
 import com.lulo.messaging.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,7 +39,7 @@ public class MensajeController {
                description = "Registra que un proceso desea recibir mensajes con un nombre dado. "
                        + "Opcionalmente con correlationKey para filtrar por instancia (HU-28).")
     public SuscripcionResponse registrarSuscripcion(
-            @PathVariable Integer procesoId,
+            @PathVariable UUID procesoId,
             @Valid @RequestBody RegistrarSuscripcionRequest request) {
         return mensajeService.registrarSuscripcion(procesoId, request);
     }
@@ -45,7 +47,7 @@ public class MensajeController {
     @GetMapping("/api/procesos/{procesoId}/suscripciones-mensaje")
     @Operation(summary = "Listar suscripciones de mensaje (HU-27)",
                description = "Lista las suscripciones activas de un proceso.")
-    public List<SuscripcionResponse> listarSuscripciones(@PathVariable Integer procesoId) {
+    public List<SuscripcionResponse> listarSuscripciones(@PathVariable UUID procesoId) {
         return mensajeService.listarSuscripciones(procesoId);
     }
 
@@ -53,7 +55,7 @@ public class MensajeController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Desactivar suscripción (HU-27)",
                description = "Desactiva una suscripción: el proceso deja de recibir ese mensaje.")
-    public void desactivarSuscripcion(@PathVariable Integer suscripcionId) {
+    public void desactivarSuscripcion(@PathVariable UUID suscripcionId) {
         mensajeService.desactivarSuscripcion(suscripcionId);
     }
 
@@ -62,7 +64,7 @@ public class MensajeController {
     @GetMapping("/api/procesos/{procesoId}/entregas-pendientes")
     @Operation(summary = "Listar entregas pendientes (HU-28)",
                description = "Lista los mensajes entregados a este proceso que aún no han sido confirmados.")
-    public List<EntregaResponse> listarEntregasPendientes(@PathVariable Integer procesoId) {
+    public List<EntregaResponse> listarEntregasPendientes(@PathVariable UUID procesoId) {
         return mensajeService.listarEntregasPendientes(procesoId);
     }
 
@@ -71,7 +73,7 @@ public class MensajeController {
                description = "El proceso destino confirma que procesó la entrega. "
                        + "Implementa la correlación: solo el proceso correcto puede confirmar.")
     public EntregaResponse confirmarRecepcion(
-            @PathVariable Integer entregaId,
+            @PathVariable UUID entregaId,
             @Valid @RequestBody ConfirmarRecepcionRequest request) {
         return mensajeService.confirmarRecepcion(entregaId, request);
     }

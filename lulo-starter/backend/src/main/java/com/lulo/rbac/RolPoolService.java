@@ -1,5 +1,7 @@
 package com.lulo.rbac;
 
+import java.util.UUID;
+
 import com.lulo.audit.AuditService;
 import com.lulo.common.exception.ApiException;
 import com.lulo.rbac.dto.ActualizarPermisosRolPoolRequest;
@@ -31,7 +33,7 @@ public class RolPoolService {
     private final AuditService auditService;
 
     @Transactional(readOnly = true)
-    public List<RolPoolResponse> listar(Integer poolId, Integer usuarioId, boolean soloActivos) {
+    public List<RolPoolResponse> listar(UUID poolId, UUID usuarioId, boolean soloActivos) {
         poolPermissionService.requirePermisoEnPool(usuarioId, poolId, "ROL_VER");
         List<RolPool> roles = soloActivos
                 ? rolPoolRepository.findByPoolIdAndActivoTrueOrderByNombreAsc(poolId)
@@ -42,7 +44,7 @@ public class RolPoolService {
     }
 
     @Transactional(readOnly = true)
-    public List<PermisoResponse> listarPermisos(Integer poolId, Integer usuarioId) {
+    public List<PermisoResponse> listarPermisos(UUID poolId, UUID usuarioId) {
         poolPermissionService.requirePermisoEnPool(usuarioId, poolId, "ROL_VER");
         return permisoRepository.findAllByOrderByCodigoAsc().stream()
                 .map(this::toPermisoResponse)
@@ -87,7 +89,7 @@ public class RolPoolService {
     }
 
     @Transactional
-    public RolPoolResponse editar(Integer rolPoolId, EditarRolPoolRequest request) {
+    public RolPoolResponse editar(UUID rolPoolId, EditarRolPoolRequest request) {
         RolPool rolPool = rolPoolRepository.findByIdAndActivoTrue(rolPoolId)
                 .orElseThrow(() -> new ApiException("Rol de pool no encontrado", HttpStatus.NOT_FOUND));
 
@@ -123,7 +125,7 @@ public class RolPoolService {
     }
 
     @Transactional
-    public void eliminar(Integer rolPoolId, EliminarRolPoolRequest request) {
+    public void eliminar(UUID rolPoolId, EliminarRolPoolRequest request) {
         RolPool rolPool = rolPoolRepository.findByIdAndActivoTrue(rolPoolId)
                 .orElseThrow(() -> new ApiException("Rol de pool no encontrado", HttpStatus.NOT_FOUND));
 
@@ -155,7 +157,7 @@ public class RolPoolService {
     }
 
     @Transactional
-    public RolPoolResponse actualizarPermisos(Integer rolPoolId, ActualizarPermisosRolPoolRequest request) {
+    public RolPoolResponse actualizarPermisos(UUID rolPoolId, ActualizarPermisosRolPoolRequest request) {
         RolPool rolPool = rolPoolRepository.findByIdAndActivoTrue(rolPoolId)
                 .orElseThrow(() -> new ApiException("Rol de pool no encontrado", HttpStatus.NOT_FOUND));
 
@@ -185,7 +187,7 @@ public class RolPoolService {
     }
 
     @Transactional
-    public RolPoolResponse asignarUsuario(Integer rolPoolId, AsignarRolPoolRequest request) {
+    public RolPoolResponse asignarUsuario(UUID rolPoolId, AsignarRolPoolRequest request) {
         RolPool rolPool = rolPoolRepository.findByIdAndActivoTrue(rolPoolId)
                 .orElseThrow(() -> new ApiException("Rol de pool no encontrado", HttpStatus.NOT_FOUND));
 

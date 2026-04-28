@@ -1,5 +1,7 @@
 package com.lulo.messaging.dto;
 
+import java.util.UUID;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,5 +11,5 @@ import lombok.Setter;
 public class ConfirmarRecepcionRequest {
 
     @NotNull
-    private Integer procesoDestinoId;
+    private UUID procesoDestinoId;
 }

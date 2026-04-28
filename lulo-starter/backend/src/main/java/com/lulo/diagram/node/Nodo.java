@@ -1,5 +1,7 @@
 package com.lulo.diagram.node;
 
+import java.util.UUID;
+
 import com.lulo.common.audit.AuditableEntity;
 import com.lulo.diagram.lane.Lane;
 import com.lulo.process.Proceso;
@@ -25,8 +27,8 @@ import lombok.Setter;
 public class Nodo extends AuditableEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "proceso_id", nullable = false)

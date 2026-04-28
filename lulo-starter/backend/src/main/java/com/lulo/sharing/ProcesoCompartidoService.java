@@ -1,5 +1,7 @@
 package com.lulo.sharing;
 
+import java.util.UUID;
+
 import com.lulo.audit.AuditService;
 import com.lulo.common.exception.ApiException;
 import com.lulo.pool.PoolRepository;
@@ -31,7 +33,7 @@ public class ProcesoCompartidoService {
     private final AuditService auditService;
 
     @Transactional
-    public ProcesoCompartidoResponse compartir(Integer procesoId, CompartirProcesoRequest request) {
+    public ProcesoCompartidoResponse compartir(UUID procesoId, CompartirProcesoRequest request) {
         Proceso proceso = requireProcesoActivo(procesoId);
         Usuario creadoPor = poolPermissionService.requireUsuarioDeEmpresa(
                 request.getCreadoPorId(), proceso.getEmpresa().getId());
@@ -69,7 +71,7 @@ public class ProcesoCompartidoService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProcesoCompartidoResponse> listar(Integer procesoId, Integer usuarioId) {
+    public List<ProcesoCompartidoResponse> listar(UUID procesoId, UUID usuarioId) {
         Proceso proceso = requireProcesoActivo(procesoId);
         Usuario usuario = poolPermissionService.requireUsuario(usuarioId);
 
@@ -85,8 +87,8 @@ public class ProcesoCompartidoService {
     }
 
     @Transactional
-    public ProcesoCompartidoResponse actualizar(Integer procesoId,
-                                                Integer poolDestinoId,
+    public ProcesoCompartidoResponse actualizar(UUID procesoId,
+                                                UUID poolDestinoId,
                                                 ActualizarComparticionProcesoRequest request) {
         Proceso proceso = requireProcesoActivo(procesoId);
         Usuario actualizadoPor = poolPermissionService.requireUsuarioDeEmpresa(
@@ -114,12 +116,12 @@ public class ProcesoCompartidoService {
     }
 
     @Transactional(readOnly = true)
-    public List<Proceso> findProcesosCompartidosVisibles(Integer empresaId,
-                                                         Integer usuarioId,
+    public List<Proceso> findProcesosCompartidosVisibles(UUID empresaId,
+                                                         UUID usuarioId,
                                                          String estado,
                                                          String categoria,
                                                          String nombre) {
-        List<Integer> poolIdsVisibles = poolPermissionService.getPoolIdsConPermisoEnEmpresa(usuarioId, empresaId, "PROCESO_VER");
+        List<UUID> poolIdsVisibles = poolPermissionService.getPoolIdsConPermisoEnEmpresa(usuarioId, empresaId, "PROCESO_VER");
         if (poolIdsVisibles.isEmpty()) {
             return List.of();
         }
@@ -133,7 +135,7 @@ public class ProcesoCompartidoService {
     }
 
     @Transactional(readOnly = true)
-    public boolean puedeVer(Proceso proceso, Integer usuarioId, Integer empresaId) {
+    public boolean puedeVer(Proceso proceso, UUID usuarioId, UUID empresaId) {
         if (proceso.getEmpresa().getId().equals(empresaId) &&
                 poolPermissionService.hasPermisoEnPool(usuarioId, proceso.getPool().getId(), "PROCESO_VER")) {
             return true;
@@ -146,7 +148,7 @@ public class ProcesoCompartidoService {
     }
 
     @Transactional(readOnly = true)
-    public boolean puedeEditar(Proceso proceso, Integer usuarioId, Integer empresaId) {
+    public boolean puedeEditar(Proceso proceso, UUID usuarioId, UUID empresaId) {
         if (proceso.getEmpresa().getId().equals(empresaId) &&
                 poolPermissionService.hasPermisoEnPool(usuarioId, proceso.getPool().getId(), "PROCESO_EDITAR")) {
             return true;
@@ -160,7 +162,7 @@ public class ProcesoCompartidoService {
     }
 
     @Transactional(readOnly = true)
-    public boolean puedeEditarDiagrama(Proceso proceso, Integer usuarioId, Integer empresaId) {
+    public boolean puedeEditarDiagrama(Proceso proceso, UUID usuarioId, UUID empresaId) {
         if (proceso.getEmpresa().getId().equals(empresaId) &&
                 poolPermissionService.hasPermisoEnPool(usuarioId, proceso.getPool().getId(), "DIAGRAMA_EDITAR")) {
             return true;
@@ -174,7 +176,7 @@ public class ProcesoCompartidoService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<ProcesoCompartido> findComparticionEditable(Proceso proceso, Integer usuarioId, Integer empresaId) {
+    public Optional<ProcesoCompartido> findComparticionEditable(Proceso proceso, UUID usuarioId, UUID empresaId) {
         return procesoCompartidoRepository.findByProcesoId(proceso.getId()).stream()
                 .filter(compartido -> "edicion".equals(compartido.getPermiso()))
                 .filter(compartido -> compartido.getPoolDestino().getEmpresa().getId().equals(empresaId))
@@ -183,7 +185,7 @@ public class ProcesoCompartidoService {
                 .findFirst();
     }
 
-    private Proceso requireProcesoActivo(Integer procesoId) {
+    private Proceso requireProcesoActivo(UUID procesoId) {
         return procesoRepository.findByIdAndActivoTrue(procesoId)
                 .orElseThrow(() -> new ApiException("Proceso no encontrado", HttpStatus.NOT_FOUND));
     }

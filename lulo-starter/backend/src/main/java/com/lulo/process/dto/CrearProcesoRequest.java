@@ -1,5 +1,7 @@
 package com.lulo.process.dto;
 
+import java.util.UUID;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -13,13 +15,13 @@ import lombok.NoArgsConstructor;
 public class CrearProcesoRequest {
 
     @NotNull(message = "La empresa es obligatoria")
-    private Integer empresaId;
+    private UUID empresaId;
 
     @NotNull(message = "El pool es obligatorio")
-    private Integer poolId;
+    private UUID poolId;
 
     @NotNull(message = "El usuario creador es obligatorio")
-    private Integer creadoPorId;
+    private UUID creadoPorId;
 
     @NotBlank(message = "El nombre del proceso es obligatorio")
     private String nombre;

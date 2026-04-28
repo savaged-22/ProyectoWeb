@@ -1,5 +1,5 @@
 CREATE TABLE empresa (
-    id             SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     nombre         VARCHAR(255) NOT NULL,
     nit            VARCHAR(50)  NOT NULL UNIQUE,
     email_contacto VARCHAR(255),

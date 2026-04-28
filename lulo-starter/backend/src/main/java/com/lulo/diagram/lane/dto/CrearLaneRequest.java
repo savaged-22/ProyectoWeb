@@ -1,5 +1,7 @@
 package com.lulo.diagram.lane.dto;
 
+import java.util.UUID;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -12,9 +14,9 @@ import lombok.NoArgsConstructor;
 public class CrearLaneRequest {
 
     @NotNull(message = "El usuario creador es obligatorio")
-    private Integer creadoPorId;
+    private UUID creadoPorId;
 
-    private Integer rolProcesoId;
+    private UUID rolProcesoId;
 
     @NotBlank(message = "El nombre de la lane es obligatorio")
     private String nombre;

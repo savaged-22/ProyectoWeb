@@ -1,5 +1,7 @@
 package com.lulo.diagram;
 
+import java.util.UUID;
+
 import com.lulo.audit.AuditService;
 import com.lulo.common.exception.ApiException;
 import com.lulo.diagram.activity.Actividad;
@@ -59,7 +61,7 @@ public class DiagramService {
     private final ProcesoCompartidoService procesoCompartidoService;
 
     @Transactional
-    public NodoResponse crearActividad(Integer procesoId, CrearActividadRequest request) {
+    public NodoResponse crearActividad(UUID procesoId, CrearActividadRequest request) {
         Proceso proceso = requireProcesoActivo(procesoId);
         requireUsuarioConEdicionDiagrama(proceso, request.getCreadoPorId());
         Lane lane = resolveLane(procesoId, request.getLaneId());
@@ -78,7 +80,7 @@ public class DiagramService {
     }
 
     @Transactional
-    public NodoResponse crearGateway(Integer procesoId, CrearGatewayRequest request) {
+    public NodoResponse crearGateway(UUID procesoId, CrearGatewayRequest request) {
         Proceso proceso = requireProcesoActivo(procesoId);
         Usuario creadoPor = requireUsuarioConEdicionDiagrama(proceso, request.getCreadoPorId());
         Lane lane = resolveLane(procesoId, request.getLaneId());
@@ -107,7 +109,7 @@ public class DiagramService {
     }
 
     @Transactional
-    public ArcoResponse crearArco(Integer procesoId, CrearArcoRequest request) {
+    public ArcoResponse crearArco(UUID procesoId, CrearArcoRequest request) {
         Proceso proceso = requireProcesoActivo(procesoId);
         Usuario creadoPor = requireUsuarioConEdicionDiagrama(proceso, request.getCreadoPorId());
         Nodo fromNodo = requireNodoDiagramable(procesoId, request.getFromNodoId(), "origen");
@@ -137,7 +139,7 @@ public class DiagramService {
     }
 
     @Transactional
-    public LaneResponse crearLane(Integer procesoId, CrearLaneRequest request) {
+    public LaneResponse crearLane(UUID procesoId, CrearLaneRequest request) {
         Proceso proceso = requireProcesoActivo(procesoId);
         Usuario creadoPor = requireUsuarioConEdicionDiagrama(proceso, request.getCreadoPorId());
 
@@ -167,7 +169,7 @@ public class DiagramService {
     }
 
     @Transactional
-    public NodoResponse editarActividad(Integer procesoId, Integer actividadId, EditarActividadRequest request) {
+    public NodoResponse editarActividad(UUID procesoId, UUID actividadId, EditarActividadRequest request) {
         Actividad actividad = actividadRepository.findById(actividadId)
                 .orElseThrow(() -> new ApiException("Actividad no encontrada", HttpStatus.NOT_FOUND));
         if (!actividad.getProceso().getId().equals(procesoId)) {
@@ -200,7 +202,7 @@ public class DiagramService {
     }
 
     @Transactional
-    public NodoResponse editarGateway(Integer procesoId, Integer gatewayId, EditarGatewayRequest request) {
+    public NodoResponse editarGateway(UUID procesoId, UUID gatewayId, EditarGatewayRequest request) {
         Gateway gateway = gatewayRepository.findByIdAndProcesoId(gatewayId, procesoId)
                 .orElseThrow(() -> new ApiException("Gateway no encontrado", HttpStatus.NOT_FOUND));
 
@@ -231,7 +233,7 @@ public class DiagramService {
     }
 
     @Transactional
-    public ArcoResponse editarArco(Integer procesoId, Integer arcoId, EditarArcoRequest request) {
+    public ArcoResponse editarArco(UUID procesoId, UUID arcoId, EditarArcoRequest request) {
         Arco arco = arcoRepository.findByIdAndActivoTrue(arcoId)
                 .orElseThrow(() -> new ApiException("Arco no encontrado", HttpStatus.NOT_FOUND));
         if (!arco.getProceso().getId().equals(procesoId)) {
@@ -272,7 +274,7 @@ public class DiagramService {
     }
 
     @Transactional
-    public LaneResponse editarLane(Integer procesoId, Integer laneId, EditarLaneRequest request) {
+    public LaneResponse editarLane(UUID procesoId, UUID laneId, EditarLaneRequest request) {
         Proceso proceso = requireProcesoActivo(procesoId);
         Lane lane = laneRepository.findById(laneId)
                 .orElseThrow(() -> new ApiException("Lane no encontrada", HttpStatus.NOT_FOUND));
@@ -315,7 +317,7 @@ public class DiagramService {
     }
 
     @Transactional
-    public void eliminarActividad(Integer procesoId, Integer actividadId, EliminarActividadRequest request) {
+    public void eliminarActividad(UUID procesoId, UUID actividadId, EliminarActividadRequest request) {
         Actividad actividad = actividadRepository.findById(actividadId)
                 .orElseThrow(() -> new ApiException("Actividad no encontrada", HttpStatus.NOT_FOUND));
         if (!actividad.getProceso().getId().equals(procesoId)) {
@@ -325,7 +327,7 @@ public class DiagramService {
         Usuario eliminadoPor = requireUsuarioConEdicionDiagrama(actividad.getProceso(), request.getEliminadoPorId());
         Map<String, Object> snapshotAntes = snapshotActividad(actividad);
 
-        Integer nodoId = actividad.getId();
+        UUID nodoId = actividad.getId();
         List<Arco> arcosConectados = new java.util.ArrayList<>();
         arcosConectados.addAll(arcoRepository.findByFromNodoId(nodoId));
         arcosConectados.addAll(arcoRepository.findByToNodoId(nodoId));
@@ -347,7 +349,7 @@ public class DiagramService {
     }
 
     @Transactional
-    public void eliminarGateway(Integer procesoId, Integer gatewayId, EliminarGatewayRequest request) {
+    public void eliminarGateway(UUID procesoId, UUID gatewayId, EliminarGatewayRequest request) {
         Gateway gateway = gatewayRepository.findByIdAndProcesoId(gatewayId, procesoId)
                 .orElseThrow(() -> new ApiException("Gateway no encontrado", HttpStatus.NOT_FOUND));
 
@@ -375,7 +377,7 @@ public class DiagramService {
     }
 
     @Transactional
-    public void eliminarArco(Integer procesoId, Integer arcoId, EliminarArcoRequest request) {
+    public void eliminarArco(UUID procesoId, UUID arcoId, EliminarArcoRequest request) {
         Arco arco = arcoRepository.findByIdAndActivoTrue(arcoId)
                 .orElseThrow(() -> new ApiException("Arco no encontrado", HttpStatus.NOT_FOUND));
         if (!arco.getProceso().getId().equals(procesoId)) {
@@ -399,7 +401,7 @@ public class DiagramService {
     }
 
     @Transactional
-    public void eliminarLane(Integer procesoId, Integer laneId, EliminarLaneRequest request) {
+    public void eliminarLane(UUID procesoId, UUID laneId, EliminarLaneRequest request) {
         Proceso proceso = requireProcesoActivo(procesoId);
         Lane lane = laneRepository.findById(laneId)
                 .orElseThrow(() -> new ApiException("Lane no encontrada", HttpStatus.NOT_FOUND));
@@ -427,21 +429,21 @@ public class DiagramService {
     }
 
     @Transactional(readOnly = true)
-    public List<LaneResponse> getLanes(Integer procesoId) {
+    public List<LaneResponse> getLanes(UUID procesoId) {
         return laneRepository.findByProcesoIdOrderByOrdenAsc(procesoId).stream()
                 .map(DiagramService::toLaneResponse)
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<NodoResponse> getNodos(Integer procesoId) {
+    public List<NodoResponse> getNodos(UUID procesoId) {
         return nodoRepository.findByProcesoId(procesoId).stream()
                 .map(DiagramService::toNodoResponse)
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<ArcoResponse> getArcos(Integer procesoId) {
+    public List<ArcoResponse> getArcos(UUID procesoId) {
         return arcoRepository.findByProcesoIdAndActivoTrue(procesoId).stream()
                 .map(DiagramService::toArcoResponse)
                 .toList();
@@ -487,12 +489,12 @@ public class DiagramService {
         return m;
     }
 
-    private Proceso requireProcesoActivo(Integer procesoId) {
+    private Proceso requireProcesoActivo(UUID procesoId) {
         return procesoRepository.findByIdAndActivoTrue(procesoId)
                 .orElseThrow(() -> new ApiException("Proceso no encontrado", HttpStatus.NOT_FOUND));
     }
 
-    private Lane resolveLane(Integer procesoId, Integer laneId) {
+    private Lane resolveLane(UUID procesoId, UUID laneId) {
         if (laneId == null) {
             return null;
         }
@@ -505,7 +507,7 @@ public class DiagramService {
         return lane;
     }
 
-    private RolProceso resolveRolProceso(Integer empresaId, Integer rolProcesoId) {
+    private RolProceso resolveRolProceso(UUID empresaId, UUID rolProcesoId) {
         if (rolProcesoId == null) {
             return null;
         }
@@ -518,7 +520,7 @@ public class DiagramService {
         return rolProceso;
     }
 
-    private Nodo requireNodoDiagramable(Integer procesoId, Integer nodoId, String etiqueta) {
+    private Nodo requireNodoDiagramable(UUID procesoId, UUID nodoId, String etiqueta) {
         Nodo nodo = nodoRepository.findById(nodoId)
                 .orElseThrow(() -> new ApiException("Nodo " + etiqueta + " no encontrado", HttpStatus.NOT_FOUND));
         if (!nodo.getProceso().getId().equals(procesoId)) {
@@ -530,7 +532,7 @@ public class DiagramService {
         return nodo;
     }
 
-    private void validateArcoChange(Integer arcoId, Integer procesoId, Nodo fromNodo, Nodo toNodo, String condicionExpr) {
+    private void validateArcoChange(UUID arcoId, UUID procesoId, Nodo fromNodo, Nodo toNodo, String condicionExpr) {
         if (fromNodo.getId().equals(toNodo.getId())) {
             throw new ApiException("El nodo origen y destino no pueden ser el mismo", HttpStatus.BAD_REQUEST);
         }
@@ -582,7 +584,7 @@ public class DiagramService {
         }
     }
 
-    private Usuario requireUsuarioConEdicionDiagrama(Proceso proceso, Integer usuarioId) {
+    private Usuario requireUsuarioConEdicionDiagrama(Proceso proceso, UUID usuarioId) {
         Usuario usuario = poolPermissionService.requireUsuario(usuarioId);
         if (!procesoCompartidoService.puedeEditarDiagrama(proceso, usuario.getId(), usuario.getEmpresa().getId())) {
             throw new ApiException("El usuario no tiene permiso para editar el diagrama", HttpStatus.FORBIDDEN);

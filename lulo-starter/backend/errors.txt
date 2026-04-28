@@ -1,0 +1,70 @@
+[[1;34mINFO[m] Scanning for projects...
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m---------------------------< [0;36mcom.lulo:lulo[0;1m >----------------------------[m
+[[1;34mINFO[m] [1mBuilding lulo 0.0.1-SNAPSHOT[m
+[[1;34mINFO[m] [1m--------------------------------[ jar ]---------------------------------[m
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mjacoco-maven-plugin:0.8.12:prepare-agent[m [1m(prepare-agent)[m @ [36mlulo[0;1m ---[m
+[[1;34mINFO[m] argLine set to -javaagent:/home/savaged_22/.m2/repository/org/jacoco/org.jacoco.agent/0.8.12/org.jacoco.agent-0.8.12-runtime.jar=destfile=/home/savaged_22/web/ProyectoWeb/lulo-starter/backend/target/jacoco.exec
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mmaven-resources-plugin:3.3.1:resources[m [1m(default-resources)[m @ [36mlulo[0;1m ---[m
+[[1;34mINFO[m] Copying 1 resource from src/main/resources to target/classes
+[[1;34mINFO[m] Copying 12 resources from src/main/resources to target/classes
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mmaven-compiler-plugin:3.13.0:compile[m [1m(default-compile)[m @ [36mlulo[0;1m ---[m
+[[1;34mINFO[m] Recompiling the module because of [1mchanged source code[m.
+[[1;34mINFO[m] Compiling 128 source files with javac [debug parameters release 21] to target/classes
+[[1;34mINFO[m] Some messages have been simplified; recompile with -Xdiags:verbose to get full output
+[[1;34mINFO[m] -------------------------------------------------------------
+[[1;31mERROR[m] COMPILATION ERROR : 
+[[1;34mINFO[m] -------------------------------------------------------------
+[[1;31mERROR[m] /home/savaged_22/web/ProyectoWeb/lulo-starter/backend/src/main/java/com/lulo/diagram/DiagramService.java:[173,60] incompatible types: java.util.UUID cannot be converted to java.lang.Integer
+[[1;31mERROR[m] /home/savaged_22/web/ProyectoWeb/lulo-starter/backend/src/main/java/com/lulo/diagram/DiagramService.java:[279,45] incompatible types: java.util.UUID cannot be converted to java.lang.Integer
+[[1;31mERROR[m] /home/savaged_22/web/ProyectoWeb/lulo-starter/backend/src/main/java/com/lulo/diagram/DiagramService.java:[321,60] incompatible types: java.util.UUID cannot be converted to java.lang.Integer
+[[1;31mERROR[m] /home/savaged_22/web/ProyectoWeb/lulo-starter/backend/src/main/java/com/lulo/diagram/DiagramService.java:[406,45] incompatible types: java.util.UUID cannot be converted to java.lang.Integer
+[[1;31mERROR[m] /home/savaged_22/web/ProyectoWeb/lulo-starter/backend/src/main/java/com/lulo/diagram/DiagramService.java:[502,45] incompatible types: java.util.UUID cannot be converted to java.lang.Integer
+[[1;31mERROR[m] /home/savaged_22/web/ProyectoWeb/lulo-starter/backend/src/main/java/com/lulo/diagram/DiagramService.java:[524,45] incompatible types: java.util.UUID cannot be converted to java.lang.Integer
+[[1;31mERROR[m] /home/savaged_22/web/ProyectoWeb/lulo-starter/backend/src/main/java/com/lulo/rbac/PoolPermissionService.java:[93,26] incompatible types: invalid method reference
+    incompatible types: java.util.UUID cannot be converted to java.lang.Integer
+[[1;31mERROR[m] /home/savaged_22/web/ProyectoWeb/lulo-starter/backend/src/main/java/com/lulo/rbac/PoolPermissionService.java:[94,27] incompatible types: inference variable E has incompatible bounds
+    equality constraints: java.util.UUID
+    lower bounds: java.lang.Integer
+[[1;31mERROR[m] /home/savaged_22/web/ProyectoWeb/lulo-starter/backend/src/main/java/com/lulo/rbac/PoolPermissionService.java:[104,26] incompatible types: invalid method reference
+    incompatible types: java.util.UUID cannot be converted to java.lang.Integer
+[[1;31mERROR[m] /home/savaged_22/web/ProyectoWeb/lulo-starter/backend/src/main/java/com/lulo/rbac/PoolPermissionService.java:[105,27] incompatible types: inference variable E has incompatible bounds
+    equality constraints: java.util.UUID
+    lower bounds: java.lang.Integer
+[[1;31mERROR[m] /home/savaged_22/web/ProyectoWeb/lulo-starter/backend/src/main/java/com/lulo/process/ProcesoService.java:[259,38] incompatible types: java.util.UUID cannot be converted to java.lang.Integer
+[[1;34mINFO[m] 11 errors 
+[[1;34mINFO[m] -------------------------------------------------------------
+[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
+[[1;34mINFO[m] [1;31mBUILD FAILURE[m
+[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
+[[1;34mINFO[m] Total time:  5.352 s
+[[1;34mINFO[m] Finished at: 2026-04-28T16:39:15-05:00
+[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
+[[1;31mERROR[m] Failed to execute goal [32morg.apache.maven.plugins:maven-compiler-plugin:3.13.0:compile[m [1m(default-compile)[m on project [36mlulo[m: [1;31mCompilation failure[m: Compilation failure: 
+[[1;31mERROR[m] /home/savaged_22/web/ProyectoWeb/lulo-starter/backend/src/main/java/com/lulo/diagram/DiagramService.java:[173,60] incompatible types: java.util.UUID cannot be converted to java.lang.Integer
+[[1;31mERROR[m] /home/savaged_22/web/ProyectoWeb/lulo-starter/backend/src/main/java/com/lulo/diagram/DiagramService.java:[279,45] incompatible types: java.util.UUID cannot be converted to java.lang.Integer
+[[1;31mERROR[m] /home/savaged_22/web/ProyectoWeb/lulo-starter/backend/src/main/java/com/lulo/diagram/DiagramService.java:[321,60] incompatible types: java.util.UUID cannot be converted to java.lang.Integer
+[[1;31mERROR[m] /home/savaged_22/web/ProyectoWeb/lulo-starter/backend/src/main/java/com/lulo/diagram/DiagramService.java:[406,45] incompatible types: java.util.UUID cannot be converted to java.lang.Integer
+[[1;31mERROR[m] /home/savaged_22/web/ProyectoWeb/lulo-starter/backend/src/main/java/com/lulo/diagram/DiagramService.java:[502,45] incompatible types: java.util.UUID cannot be converted to java.lang.Integer
+[[1;31mERROR[m] /home/savaged_22/web/ProyectoWeb/lulo-starter/backend/src/main/java/com/lulo/diagram/DiagramService.java:[524,45] incompatible types: java.util.UUID cannot be converted to java.lang.Integer
+[[1;31mERROR[m] /home/savaged_22/web/ProyectoWeb/lulo-starter/backend/src/main/java/com/lulo/rbac/PoolPermissionService.java:[93,26] incompatible types: invalid method reference
+[[1;31mERROR[m]     incompatible types: java.util.UUID cannot be converted to java.lang.Integer
+[[1;31mERROR[m] /home/savaged_22/web/ProyectoWeb/lulo-starter/backend/src/main/java/com/lulo/rbac/PoolPermissionService.java:[94,27] incompatible types: inference variable E has incompatible bounds
+[[1;31mERROR[m]     equality constraints: java.util.UUID
+[[1;31mERROR[m]     lower bounds: java.lang.Integer
+[[1;31mERROR[m] /home/savaged_22/web/ProyectoWeb/lulo-starter/backend/src/main/java/com/lulo/rbac/PoolPermissionService.java:[104,26] incompatible types: invalid method reference
+[[1;31mERROR[m]     incompatible types: java.util.UUID cannot be converted to java.lang.Integer
+[[1;31mERROR[m] /home/savaged_22/web/ProyectoWeb/lulo-starter/backend/src/main/java/com/lulo/rbac/PoolPermissionService.java:[105,27] incompatible types: inference variable E has incompatible bounds
+[[1;31mERROR[m]     equality constraints: java.util.UUID
+[[1;31mERROR[m]     lower bounds: java.lang.Integer
+[[1;31mERROR[m] /home/savaged_22/web/ProyectoWeb/lulo-starter/backend/src/main/java/com/lulo/process/ProcesoService.java:[259,38] incompatible types: java.util.UUID cannot be converted to java.lang.Integer
+[[1;31mERROR[m] -> [1m[Help 1][m
+[[1;31mERROR[m] 
+[[1;31mERROR[m] To see the full stack trace of the errors, re-run Maven with the [1m-e[m switch.
+[[1;31mERROR[m] Re-run Maven using the [1m-X[m switch to enable full debug logging.
+[[1;31mERROR[m] 
+[[1;31mERROR[m] For more information about the errors and possible solutions, please read the following articles:
+[[1;31mERROR[m] [1m[Help 1][m http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

@@ -1,5 +1,7 @@
 package com.lulo.resumen.dto;
 
+import java.util.UUID;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -37,7 +39,7 @@ public class ResumenResponse {
     @Getter
     @Builder
     public static class EmpresaResumen {
-        private Integer id;
+        private UUID id;
         private String nombre;
         private String nit;
         private String emailContacto;
@@ -52,7 +54,7 @@ public class ResumenResponse {
     @Getter
     @Builder
     public static class UsuarioResumen {
-        private Integer id;
+        private UUID id;
         private String email;
         private String estado;
         private LocalDateTime createdAt;
@@ -62,7 +64,7 @@ public class ResumenResponse {
     @Getter
     @Builder
     public static class RolProcesoResumen {
-        private Integer id;
+        private UUID id;
         private String nombre;
         private String descripcion;
         private boolean activo;
@@ -73,7 +75,7 @@ public class ResumenResponse {
     @Getter
     @Builder
     public static class PoolResumen {
-        private Integer id;
+        private UUID id;
         private String nombre;
         private String configJson;
         private LocalDateTime createdAt;
@@ -86,7 +88,7 @@ public class ResumenResponse {
     @Getter
     @Builder
     public static class RolPoolResumen {
-        private Integer id;
+        private UUID id;
         private String nombre;
         private String descripcion;
         private boolean activo;
@@ -101,7 +103,7 @@ public class ResumenResponse {
     @Getter
     @Builder
     public static class MiembroResumen {
-        private Integer usuarioId;
+        private UUID usuarioId;
         private String email;
         private LocalDateTime asignadoEn;
     }
@@ -110,7 +112,7 @@ public class ResumenResponse {
     @Getter
     @Builder
     public static class ProcesoResumen {
-        private Integer id;
+        private UUID id;
         private String nombre;
         private String descripcion;
         private String categoria;
@@ -130,10 +132,10 @@ public class ResumenResponse {
     @Getter
     @Builder
     public static class LaneResumen {
-        private Integer id;
+        private UUID id;
         private String nombre;
         private int orden;
-        private Integer rolProcesoId;
+        private UUID rolProcesoId;
         private String rolProcesoNombre;
         private LocalDateTime createdAt;
     }
@@ -142,12 +144,12 @@ public class ResumenResponse {
     @Getter
     @Builder
     public static class NodoResumen {
-        private Integer id;
+        private UUID id;
         private String tipo;
         private String label;
         private Float posX;
         private Float posY;
-        private Integer laneId;
+        private UUID laneId;
         private LocalDateTime createdAt;
 
         // Solo si tipo = 'actividad'
@@ -161,10 +163,10 @@ public class ResumenResponse {
     @Getter
     @Builder
     public static class ArcoResumen {
-        private Integer id;
-        private Integer fromNodoId;
+        private UUID id;
+        private UUID fromNodoId;
         private String fromNodoLabel;
-        private Integer toNodoId;
+        private UUID toNodoId;
         private String toNodoLabel;
         private String condicionExpr;
         private boolean activo;
@@ -175,7 +177,7 @@ public class ResumenResponse {
     @Getter
     @Builder
     public static class CompartidoResumen {
-        private Integer poolDestinoId;
+        private UUID poolDestinoId;
         private String poolDestinoNombre;
         private String permiso;
         private LocalDateTime createdAt;

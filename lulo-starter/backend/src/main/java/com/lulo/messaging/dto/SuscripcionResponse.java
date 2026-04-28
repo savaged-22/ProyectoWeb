@@ -1,5 +1,7 @@
 package com.lulo.messaging.dto;
 
+import java.util.UUID;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -9,9 +11,9 @@ import java.time.LocalDateTime;
 @Builder
 public class SuscripcionResponse {
 
-    private Integer id;
-    private Integer empresaId;
-    private Integer procesoId;
+    private UUID id;
+    private UUID empresaId;
+    private UUID procesoId;
     private String nombreMensaje;
     private String correlationKey;
     private boolean activo;

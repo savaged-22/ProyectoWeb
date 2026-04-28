@@ -1,5 +1,7 @@
 package com.lulo.diagram.gateway.dto;
 
+import java.util.UUID;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
@@ -13,9 +15,9 @@ public class CrearGatewayRequest {
 
     // TODO: reemplazar por el usuario extraído del token JWT (HU-Auth)
     @NotNull(message = "El usuario creador es obligatorio")
-    private Integer creadoPorId;
+    private UUID creadoPorId;
 
-    private Integer laneId;
+    private UUID laneId;
     private String label;
     private Float posX;
     private Float posY;

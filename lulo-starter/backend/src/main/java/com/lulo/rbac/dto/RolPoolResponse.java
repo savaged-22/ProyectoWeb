@@ -1,5 +1,7 @@
 package com.lulo.rbac.dto;
 
+import java.util.UUID;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -10,8 +12,8 @@ import java.util.List;
 @Builder
 public class RolPoolResponse {
 
-    private Integer id;
-    private Integer poolId;
+    private UUID id;
+    private UUID poolId;
     private String poolNombre;
     private String nombre;
     private String descripcion;

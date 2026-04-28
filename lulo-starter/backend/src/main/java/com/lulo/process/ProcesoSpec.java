@@ -1,5 +1,7 @@
 package com.lulo.process;
 
+import java.util.UUID;
+
 import org.springframework.data.jpa.domain.Specification;
 
 public class ProcesoSpec {
@@ -10,7 +12,7 @@ public class ProcesoSpec {
         return (root, query, cb) -> cb.isTrue(root.get("activo"));
     }
 
-    public static Specification<Proceso> deEmpresa(Integer empresaId) {
+    public static Specification<Proceso> deEmpresa(UUID empresaId) {
         return (root, query, cb) -> cb.equal(root.get("empresa").get("id"), empresaId);
     }
 

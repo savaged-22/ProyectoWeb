@@ -1,5 +1,7 @@
 package com.lulo.diagram.activity.dto;
 
+import java.util.UUID;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
@@ -13,7 +15,7 @@ public class EditarActividadRequest {
 
     // TODO: reemplazar por el usuario extraído del token JWT (HU-Auth)
     @NotNull(message = "El usuario que edita es obligatorio")
-    private Integer editadoPorId;
+    private UUID editadoPorId;
 
     // Todos opcionales — solo actualiza lo que llega (semántica PATCH)
     private String label;
@@ -24,7 +26,7 @@ public class EditarActividadRequest {
     )
     private String tipoActividad;
 
-    private Integer laneId;
+    private UUID laneId;
     private Float   posX;
     private Float   posY;
     private String  propsJson;

@@ -1,5 +1,7 @@
 package com.lulo.pool;
 
+import java.util.UUID;
+
 import com.lulo.pool.dto.CrearPoolRequest;
 import com.lulo.pool.dto.EditarPoolRequest;
 import com.lulo.pool.dto.PoolResponse;
@@ -22,7 +24,7 @@ public class PoolController {
 
     @GetMapping
     @Operation(summary = "Listar pools", description = "Lista los pools de una empresa")
-    public List<PoolResponse> listar(@RequestParam Integer empresaId, @RequestParam Integer usuarioId) {
+    public List<PoolResponse> listar(@RequestParam UUID empresaId, @RequestParam UUID usuarioId) {
         return poolService.listar(empresaId, usuarioId);
     }
 
@@ -35,7 +37,7 @@ public class PoolController {
 
     @PatchMapping("/{poolId}")
     @Operation(summary = "Editar pool", description = "Actualiza nombre o configuración del pool")
-    public PoolResponse editar(@PathVariable Integer poolId, @Valid @RequestBody EditarPoolRequest request) {
+    public PoolResponse editar(@PathVariable UUID poolId, @Valid @RequestBody EditarPoolRequest request) {
         return poolService.editar(poolId, request);
     }
 }

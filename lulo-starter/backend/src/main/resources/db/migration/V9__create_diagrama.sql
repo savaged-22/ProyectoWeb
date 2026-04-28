@@ -1,9 +1,9 @@
 -- ─── Lane ────────────────────────────────────────────────────────────────────
 -- Carril del diagrama, asociado a un rol funcional de la empresa
 CREATE TABLE lane (
-    id             SERIAL PRIMARY KEY,
-    proceso_id     INTEGER      NOT NULL REFERENCES proceso(id),
-    rol_proceso_id INTEGER      REFERENCES rol_proceso(id),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    proceso_id UUID      NOT NULL REFERENCES proceso(id),
+    rol_proceso_id UUID      REFERENCES rol_proceso(id),
     nombre         VARCHAR(100) NOT NULL,
     orden          INTEGER      NOT NULL DEFAULT 0,
     created_at     TIMESTAMP    NOT NULL DEFAULT NOW()
@@ -14,8 +14,8 @@ CREATE INDEX idx_lane_proceso ON lane(proceso_id);
 -- ─── Nodo (tabla base — herencia JOINED) ─────────────────────────────────────
 -- tipo: actividad | gateway | inicio | fin
 CREATE TABLE nodo (
-    id         SERIAL PRIMARY KEY,
-    proceso_id INTEGER     NOT NULL REFERENCES proceso(id),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    proceso_id UUID     NOT NULL REFERENCES proceso(id),
     lane_id    INTEGER     REFERENCES lane(id),
     tipo       VARCHAR(30) NOT NULL,
     label      VARCHAR(255),
@@ -46,8 +46,8 @@ CREATE TABLE gateway (
 -- ─── Arco ────────────────────────────────────────────────────────────────────
 -- Conexión dirigida entre dos nodos cualesquiera
 CREATE TABLE arco (
-    id             SERIAL PRIMARY KEY,
-    proceso_id     INTEGER   NOT NULL REFERENCES proceso(id),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    proceso_id UUID   NOT NULL REFERENCES proceso(id),
     from_nodo_id   INTEGER   NOT NULL REFERENCES nodo(id),
     to_nodo_id     INTEGER   NOT NULL REFERENCES nodo(id),
     condicion_expr TEXT,

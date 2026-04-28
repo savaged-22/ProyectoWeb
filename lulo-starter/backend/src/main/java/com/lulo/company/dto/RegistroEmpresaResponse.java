@@ -1,5 +1,7 @@
 package com.lulo.company.dto;
 
+import java.util.UUID;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -7,9 +9,9 @@ import lombok.Getter;
 @Builder
 public class RegistroEmpresaResponse {
 
-    private Integer empresaId;
+    private UUID empresaId;
     private String empresaNombre;
-    private Integer usuarioId;
+    private UUID usuarioId;
     private String emailAdmin;
     private String poolDefault;
     private String mensaje;

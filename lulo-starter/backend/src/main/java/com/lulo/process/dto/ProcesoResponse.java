@@ -1,5 +1,7 @@
 package com.lulo.process.dto;
 
+import java.util.UUID;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -9,12 +11,12 @@ import java.time.LocalDateTime;
 @Builder
 public class ProcesoResponse {
 
-    private Integer       id;
-    private Integer       empresaId;
+    private UUID id;
+    private UUID empresaId;
     private String        empresaNombre;
-    private Integer       poolId;
+    private UUID poolId;
     private String        poolNombre;
-    private Integer       creadoPorId;
+    private UUID creadoPorId;
     private String        creadoPorEmail;
     private String        nombre;
     private String        descripcion;

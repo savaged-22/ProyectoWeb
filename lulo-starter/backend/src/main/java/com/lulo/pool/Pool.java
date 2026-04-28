@@ -1,5 +1,7 @@
 package com.lulo.pool;
 
+import java.util.UUID;
+
 import com.lulo.common.audit.AuditableEntity;
 import com.lulo.company.Empresa;
 import jakarta.persistence.*;
@@ -19,8 +21,8 @@ import org.hibernate.type.SqlTypes;
 public class Pool extends AuditableEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "empresa_id", nullable = false)

@@ -1,5 +1,7 @@
 package com.lulo.pool;
 
+import java.util.UUID;
+
 import com.lulo.audit.AuditService;
 import com.lulo.common.exception.ApiException;
 import com.lulo.company.Empresa;
@@ -41,7 +43,7 @@ public class PoolService {
     private final AuditService auditService;
 
     @Transactional(readOnly = true)
-    public List<PoolResponse> listar(Integer empresaId, Integer usuarioId) {
+    public List<PoolResponse> listar(UUID empresaId, UUID usuarioId) {
         poolPermissionService.requirePermisoEnEmpresa(usuarioId, empresaId, "POOL_ADMINISTRAR");
         return poolRepository.findByEmpresaIdOrderByNombreAsc(empresaId).stream()
                 .map(PoolService::toResponse)
@@ -98,7 +100,7 @@ public class PoolService {
     }
 
     @Transactional
-    public PoolResponse editar(Integer poolId, EditarPoolRequest request) {
+    public PoolResponse editar(UUID poolId, EditarPoolRequest request) {
         Pool pool = poolRepository.findById(poolId)
                 .orElseThrow(() -> new ApiException("Pool no encontrado", HttpStatus.NOT_FOUND));
 

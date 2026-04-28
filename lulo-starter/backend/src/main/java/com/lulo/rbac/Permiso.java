@@ -1,5 +1,7 @@
 package com.lulo.rbac;
 
+import java.util.UUID;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,8 +15,8 @@ import lombok.Setter;
 public class Permiso {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column(nullable = false, unique = true)
     private String codigo;

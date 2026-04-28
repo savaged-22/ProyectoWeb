@@ -1,5 +1,7 @@
 package com.lulo.messaging.dto;
 
+import java.util.UUID;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -10,9 +12,9 @@ import java.util.List;
 @Builder
 public class MensajeResponse {
 
-    private Integer id;
-    private Integer empresaId;
-    private Integer procesoOrigenId;
+    private UUID id;
+    private UUID empresaId;
+    private UUID procesoOrigenId;
     private String nombreMensaje;
     private String payloadJson;
     private String correlationKey;

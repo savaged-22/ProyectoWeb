@@ -1,5 +1,7 @@
 package com.lulo.users.invitation.dto;
 
+import java.util.UUID;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -9,7 +11,7 @@ import java.time.LocalDateTime;
 @Builder
 public class InvitarUsuarioResponse {
 
-    private Integer invitacionId;
+    private UUID invitacionId;
     private String  emailInvitado;
     private String  rolAsignado;
     private String  token;           // TODO: en producción esto va por email, no en la respuesta

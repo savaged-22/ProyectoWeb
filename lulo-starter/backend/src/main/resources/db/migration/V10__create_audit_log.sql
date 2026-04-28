@@ -1,9 +1,9 @@
 -- Tabla append-only: nunca se actualiza ni elimina un registro
 -- accion: CREAR | EDITAR | PUBLICAR | ARCHIVAR | COMPARTIR | ASIGNAR_ROL | REVOCAR_ROL
 CREATE TABLE audit_log (
-    id          SERIAL PRIMARY KEY,
-    empresa_id  INTEGER      NOT NULL REFERENCES empresa(id),
-    usuario_id  INTEGER      NOT NULL REFERENCES usuario(id),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    empresa_id UUID      NOT NULL REFERENCES empresa(id),
+    usuario_id UUID      NOT NULL REFERENCES usuario(id),
     entidad     VARCHAR(100) NOT NULL,
     entidad_id  INTEGER      NOT NULL,
     accion      VARCHAR(30)  NOT NULL,

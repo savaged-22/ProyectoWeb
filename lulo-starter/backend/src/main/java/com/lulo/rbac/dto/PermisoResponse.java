@@ -1,5 +1,7 @@
 package com.lulo.rbac.dto;
 
+import java.util.UUID;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -7,7 +9,7 @@ import lombok.Getter;
 @Builder
 public class PermisoResponse {
 
-    private Integer id;
+    private UUID id;
     private String codigo;
     private String descripcion;
 }

@@ -1,5 +1,7 @@
 package com.lulo.pool.dto;
 
+import java.util.UUID;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -9,8 +11,8 @@ import java.time.LocalDateTime;
 @Builder
 public class PoolResponse {
 
-    private Integer id;
-    private Integer empresaId;
+    private UUID id;
+    private UUID empresaId;
     private String empresaNombre;
     private String nombre;
     private String configJson;

@@ -1,5 +1,7 @@
 package com.lulo.messaging;
 
+import java.util.UUID;
+
 import com.lulo.common.exception.ApiException;
 import com.lulo.company.EmpresaRepository;
 import com.lulo.messaging.dto.NotificacionExternaResponse;
@@ -34,7 +36,7 @@ public class NotificacionExternaService {
     // ------------------------------------------------------------------
 
     @Transactional
-    public NotificacionExternaResponse registrar(Integer procesoId,
+    public NotificacionExternaResponse registrar(UUID procesoId,
                                                  RegistrarNotificacionExternaRequest request) {
         var empresa = empresaRepository.findById(request.getEmpresaId())
                 .orElseThrow(() -> new ApiException("Empresa no encontrada", HttpStatus.NOT_FOUND));
@@ -58,7 +60,7 @@ public class NotificacionExternaService {
     }
 
     @Transactional(readOnly = true)
-    public List<NotificacionExternaResponse> listar(Integer procesoId) {
+    public List<NotificacionExternaResponse> listar(UUID procesoId) {
         return notificacionRepository.findByProcesoIdAndActivoTrue(procesoId)
                 .stream()
                 .map(this::toResponse)
@@ -66,7 +68,7 @@ public class NotificacionExternaService {
     }
 
     @Transactional
-    public void desactivar(Integer notificacionId) {
+    public void desactivar(UUID notificacionId) {
         NotificacionExterna notificacion = notificacionRepository.findById(notificacionId)
                 .orElseThrow(() -> new ApiException("Notificación externa no encontrada", HttpStatus.NOT_FOUND));
         notificacion.setActivo(false);

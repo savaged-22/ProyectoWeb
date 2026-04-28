@@ -1,5 +1,7 @@
 package com.lulo.sharing;
 
+import java.util.UUID;
+
 import com.lulo.sharing.dto.ActualizarComparticionProcesoRequest;
 import com.lulo.sharing.dto.CompartirProcesoRequest;
 import com.lulo.sharing.dto.ProcesoCompartidoResponse;
@@ -23,21 +25,21 @@ public class ProcesoCompartidoController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Compartir proceso", description = "Comparte un proceso con otro pool indicando el nivel de acceso")
-    public ProcesoCompartidoResponse compartir(@PathVariable Integer procesoId,
+    public ProcesoCompartidoResponse compartir(@PathVariable UUID procesoId,
                                                @Valid @RequestBody CompartirProcesoRequest request) {
         return procesoCompartidoService.compartir(procesoId, request);
     }
 
     @GetMapping
     @Operation(summary = "Consultar comparticiones", description = "Lista los pools con los que un proceso está compartido")
-    public List<ProcesoCompartidoResponse> listar(@PathVariable Integer procesoId, @RequestParam Integer usuarioId) {
+    public List<ProcesoCompartidoResponse> listar(@PathVariable UUID procesoId, @RequestParam UUID usuarioId) {
         return procesoCompartidoService.listar(procesoId, usuarioId);
     }
 
     @PatchMapping("/{poolDestinoId}")
     @Operation(summary = "Actualizar compartición", description = "Actualiza el permiso asociado a un pool destino")
-    public ProcesoCompartidoResponse actualizar(@PathVariable Integer procesoId,
-                                                @PathVariable Integer poolDestinoId,
+    public ProcesoCompartidoResponse actualizar(@PathVariable UUID procesoId,
+                                                @PathVariable UUID poolDestinoId,
                                                 @Valid @RequestBody ActualizarComparticionProcesoRequest request) {
         return procesoCompartidoService.actualizar(procesoId, poolDestinoId, request);
     }

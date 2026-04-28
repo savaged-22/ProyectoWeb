@@ -1,5 +1,7 @@
 package com.lulo.pool.dto;
 
+import java.util.UUID;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -12,10 +14,10 @@ import lombok.NoArgsConstructor;
 public class CrearPoolRequest {
 
     @NotNull(message = "La empresa es obligatoria")
-    private Integer empresaId;
+    private UUID empresaId;
 
     @NotNull(message = "El usuario creador es obligatorio")
-    private Integer creadoPorId;
+    private UUID creadoPorId;
 
     @NotBlank(message = "El nombre del pool es obligatorio")
     private String nombre;

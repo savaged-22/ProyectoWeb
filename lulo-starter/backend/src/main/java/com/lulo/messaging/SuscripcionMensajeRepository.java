@@ -1,13 +1,15 @@
 package com.lulo.messaging;
 
+import java.util.UUID;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface SuscripcionMensajeRepository extends JpaRepository<SuscripcionMensaje, Integer> {
+public interface SuscripcionMensajeRepository extends JpaRepository<SuscripcionMensaje, UUID> {
 
-    List<SuscripcionMensaje> findByProcesoIdAndActivoTrue(Integer procesoId);
+    List<SuscripcionMensaje> findByProcesoIdAndActivoTrue(UUID procesoId);
 
     List<SuscripcionMensaje> findByEmpresaIdAndNombreMensajeAndActivoTrue(
-            Integer empresaId, String nombreMensaje);
+            UUID empresaId, String nombreMensaje);
 }

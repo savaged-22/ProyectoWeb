@@ -1,5 +1,7 @@
 package com.lulo.rbac;
 
+import java.util.UUID;
+
 import com.lulo.audit.AuditService;
 import com.lulo.common.exception.ApiException;
 import com.lulo.company.Empresa;
@@ -28,7 +30,7 @@ public class RolProcesoService {
     private final AuditService auditService;
 
     @Transactional(readOnly = true)
-    public List<RolProcesoResponse> listar(Integer empresaId, Integer usuarioId, Boolean soloActivos) {
+    public List<RolProcesoResponse> listar(UUID empresaId, UUID usuarioId, Boolean soloActivos) {
         poolPermissionService.requirePermisoEnEmpresa(usuarioId, empresaId, "ROL_VER");
 
         List<RolProceso> roles = Boolean.FALSE.equals(soloActivos)
@@ -75,7 +77,7 @@ public class RolProcesoService {
     }
 
     @Transactional
-    public RolProcesoResponse editar(Integer rolProcesoId, EditarRolProcesoRequest request) {
+    public RolProcesoResponse editar(UUID rolProcesoId, EditarRolProcesoRequest request) {
         RolProceso rolProceso = rolProcesoRepository.findByIdAndActivoTrue(rolProcesoId)
                 .orElseThrow(() -> new ApiException("Rol de proceso no encontrado", HttpStatus.NOT_FOUND));
 
@@ -111,7 +113,7 @@ public class RolProcesoService {
     }
 
     @Transactional
-    public void eliminar(Integer rolProcesoId, EliminarRolProcesoRequest request) {
+    public void eliminar(UUID rolProcesoId, EliminarRolProcesoRequest request) {
         RolProceso rolProceso = rolProcesoRepository.findByIdAndActivoTrue(rolProcesoId)
                 .orElseThrow(() -> new ApiException("Rol de proceso no encontrado", HttpStatus.NOT_FOUND));
 
@@ -140,7 +142,7 @@ public class RolProcesoService {
         );
     }
 
-    private com.lulo.users.Usuario requireUsuarioDeEmpresa(Integer usuarioId, Integer empresaId) {
+    private com.lulo.users.Usuario requireUsuarioDeEmpresa(UUID usuarioId, UUID empresaId) {
         return poolPermissionService.requireUsuarioDeEmpresa(usuarioId, empresaId);
     }
 

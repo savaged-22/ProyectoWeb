@@ -1,5 +1,7 @@
 package com.lulo.resumen;
 
+import java.util.UUID;
+
 import com.lulo.company.Empresa;
 import com.lulo.company.EmpresaRepository;
 import com.lulo.diagram.activity.Actividad;
@@ -201,7 +203,7 @@ public class ResumenService {
     // ── Lane ──────────────────────────────────────────────────────────────────
 
     private LaneResumen mapLane(Lane l) {
-        Integer rolProcesoId = l.getRolProceso() != null ? l.getRolProceso().getId() : null;
+        UUID rolProcesoId = l.getRolProceso() != null ? l.getRolProceso().getId() : null;
         String rolProcesoNombre = l.getRolProceso() != null ? l.getRolProceso().getNombre() : null;
 
         return LaneResumen.builder()

@@ -1,5 +1,7 @@
 package com.lulo.messaging;
 
+import java.util.UUID;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,8 +18,8 @@ import java.time.LocalDateTime;
 public class EntregaMensaje {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "mensaje_id", nullable = false)
