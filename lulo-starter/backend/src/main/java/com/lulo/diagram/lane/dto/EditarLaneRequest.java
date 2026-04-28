@@ -1,5 +1,7 @@
 package com.lulo.diagram.lane.dto;
 
+import java.util.UUID;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,9 +13,9 @@ import lombok.NoArgsConstructor;
 public class EditarLaneRequest {
 
     @NotNull(message = "El usuario que edita es obligatorio")
-    private Integer editadoPorId;
+    private UUID editadoPorId;
 
-    private Integer rolProcesoId;
+    private UUID rolProcesoId;
     private Boolean limpiarRolProceso;
     private String nombre;
     private Integer orden;

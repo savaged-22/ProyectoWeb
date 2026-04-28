@@ -1,5 +1,7 @@
 package com.lulo.users.invitation.dto;
 
+import java.util.UUID;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -13,13 +15,13 @@ import lombok.NoArgsConstructor;
 public class InvitarUsuarioRequest {
 
     @NotNull(message = "La empresa es obligatoria")
-    private Integer empresaId;
+    private UUID empresaId;
 
     @NotNull(message = "El pool es obligatorio")
-    private Integer rolPoolId;
+    private UUID rolPoolId;
 
     @NotNull(message = "El usuario que invita es obligatorio")
-    private Integer invitadoPorId;
+    private UUID invitadoPorId;
 
     @NotBlank(message = "El correo del invitado es obligatorio")
     @Email(message = "El correo del invitado no es válido")

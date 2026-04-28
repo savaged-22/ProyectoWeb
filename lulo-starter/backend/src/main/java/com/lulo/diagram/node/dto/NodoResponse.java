@@ -1,5 +1,7 @@
 package com.lulo.diagram.node.dto;
 
+import java.util.UUID;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -14,8 +16,8 @@ import java.time.LocalDateTime;
 @Builder
 public class NodoResponse {
 
-    private Integer id;
-    private Integer laneId;
+    private UUID id;
+    private UUID laneId;
 
     // tipo: 'actividad' | 'gateway' | 'nodo' (inicio, fin)
     private String tipo;

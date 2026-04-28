@@ -1,5 +1,7 @@
 package com.lulo.sharing;
 
+import java.util.UUID;
+
 import com.lulo.pool.Pool;
 import com.lulo.process.Proceso;
 import com.lulo.users.Usuario;
@@ -19,8 +21,8 @@ import java.time.LocalDateTime;
 public class ProcesoCompartido {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "proceso_id", nullable = false)

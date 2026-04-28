@@ -1,5 +1,7 @@
 package com.lulo.rbac.dto;
 
+import java.util.UUID;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -12,7 +14,7 @@ import lombok.NoArgsConstructor;
 public class EliminarRolPoolRequest {
 
     @NotNull(message = "El usuario que elimina es obligatorio")
-    private Integer eliminadoPorId;
+    private UUID eliminadoPorId;
 
     @AssertTrue(message = "Debe confirmar explícitamente la eliminación enviando confirmar: true")
     private boolean confirmar;

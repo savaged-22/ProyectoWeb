@@ -1,5 +1,7 @@
 package com.lulo.messaging;
 
+import java.util.UUID;
+
 import com.lulo.audit.AuditService;
 import com.lulo.common.exception.ApiException;
 import com.lulo.company.EmpresaRepository;
@@ -99,7 +101,7 @@ public class MensajeService {
     // ------------------------------------------------------------------
 
     @Transactional
-    public SuscripcionResponse registrarSuscripcion(Integer procesoId,
+    public SuscripcionResponse registrarSuscripcion(UUID procesoId,
                                                     RegistrarSuscripcionRequest request) {
         var empresa = empresaRepository.findById(request.getEmpresaId())
                 .orElseThrow(() -> new ApiException("Empresa no encontrada", HttpStatus.NOT_FOUND));
@@ -122,7 +124,7 @@ public class MensajeService {
     }
 
     @Transactional(readOnly = true)
-    public List<SuscripcionResponse> listarSuscripciones(Integer procesoId) {
+    public List<SuscripcionResponse> listarSuscripciones(UUID procesoId) {
         return suscripcionRepository.findByProcesoIdAndActivoTrue(procesoId)
                 .stream()
                 .map(this::toSuscripcionResponse)
@@ -130,7 +132,7 @@ public class MensajeService {
     }
 
     @Transactional
-    public void desactivarSuscripcion(Integer suscripcionId) {
+    public void desactivarSuscripcion(UUID suscripcionId) {
         SuscripcionMensaje suscripcion = suscripcionRepository.findById(suscripcionId)
                 .orElseThrow(() -> new ApiException("Suscripción no encontrada", HttpStatus.NOT_FOUND));
         suscripcion.setActivo(false);
@@ -142,7 +144,7 @@ public class MensajeService {
     // ------------------------------------------------------------------
 
     @Transactional
-    public EntregaResponse confirmarRecepcion(Integer entregaId, ConfirmarRecepcionRequest request) {
+    public EntregaResponse confirmarRecepcion(UUID entregaId, ConfirmarRecepcionRequest request) {
         EntregaMensaje entrega = entregaRepository.findById(entregaId)
                 .orElseThrow(() -> new ApiException("Entrega no encontrada", HttpStatus.NOT_FOUND));
 
@@ -162,7 +164,7 @@ public class MensajeService {
     }
 
     @Transactional(readOnly = true)
-    public List<EntregaResponse> listarEntregasPendientes(Integer procesoId) {
+    public List<EntregaResponse> listarEntregasPendientes(UUID procesoId) {
         return entregaRepository.findBySuscripcion_ProcesoIdAndEstado(procesoId, "pendiente")
                 .stream()
                 .map(this::toEntregaResponse)
@@ -178,7 +180,7 @@ public class MensajeService {
      * Si el mensaje tiene correlationKey → solo suscripciones con la misma clave.
      * Si el mensaje no tiene correlationKey → todas las suscripciones del nombre.
      */
-    private List<SuscripcionMensaje> resolverSuscripciones(Integer empresaId,
+    private List<SuscripcionMensaje> resolverSuscripciones(UUID empresaId,
                                                             String nombreMensaje,
                                                             String correlationKey) {
         List<SuscripcionMensaje> candidatas =

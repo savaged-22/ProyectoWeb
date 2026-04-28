@@ -1,5 +1,7 @@
 package com.lulo.audit;
 
+import java.util.UUID;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lulo.company.Empresa;
 import com.lulo.users.Usuario;
@@ -32,7 +34,7 @@ public class AuditService {
     public void registrar(Empresa empresa,
                           Usuario usuario,
                           String entidad,
-                          Integer entidadId,
+                          UUID entidadId,
                           String accion,
                           Object antes,
                           Object despues) {

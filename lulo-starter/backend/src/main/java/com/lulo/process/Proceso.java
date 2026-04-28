@@ -1,5 +1,7 @@
 package com.lulo.process;
 
+import java.util.UUID;
+
 import com.lulo.company.Empresa;
 import com.lulo.pool.Pool;
 import com.lulo.users.Usuario;
@@ -20,8 +22,8 @@ import java.time.LocalDateTime;
 public class Proceso {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "empresa_id", nullable = false)

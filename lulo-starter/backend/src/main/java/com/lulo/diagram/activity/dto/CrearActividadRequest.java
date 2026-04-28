@@ -1,5 +1,7 @@
 package com.lulo.diagram.activity.dto;
 
+import java.util.UUID;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -14,10 +16,10 @@ public class CrearActividadRequest {
 
     // TODO: reemplazar por el usuario extraído del token JWT (HU-Auth)
     @NotNull(message = "El usuario creador es obligatorio")
-    private Integer creadoPorId;
+    private UUID creadoPorId;
 
     // Lane opcional: la actividad puede no estar asignada a un carril todavía
-    private Integer laneId;
+    private UUID laneId;
 
     @NotBlank(message = "El nombre de la actividad es obligatorio")
     private String label;

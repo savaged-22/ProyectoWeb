@@ -1,5 +1,7 @@
 package com.lulo.diagram.lane;
 
+import java.util.UUID;
+
 import com.lulo.common.audit.AuditableEntity;
 import com.lulo.process.Proceso;
 import com.lulo.rbac.RolProceso;
@@ -16,8 +18,8 @@ import lombok.Setter;
 public class Lane extends AuditableEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "proceso_id", nullable = false)

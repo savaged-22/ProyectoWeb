@@ -1,5 +1,7 @@
 package com.lulo.process;
 
+import java.util.UUID;
+
 import com.lulo.process.dto.CrearProcesoRequest;
 import com.lulo.process.dto.EditarProcesoRequest;
 import com.lulo.process.dto.EliminarProcesoRequest;
@@ -28,8 +30,8 @@ public class ProcesoController {
             summary = "Listar procesos",
             description = "Lista paginada con filtros opcionales por estado, categoría y nombre")
     public Page<ProcesoResponse> listar(
-            @RequestParam Integer empresaId,
-            @RequestParam Integer usuarioId,
+            @RequestParam UUID empresaId,
+            @RequestParam UUID usuarioId,
             @RequestParam(required = false) String estado,
             @RequestParam(required = false) String categoria,
             @RequestParam(required = false) String nombre,
@@ -42,9 +44,9 @@ public class ProcesoController {
             summary = "Obtener proceso con diagrama",
             description = "Retorna el proceso y todos sus elementos del diagrama: lanes, nodos y arcos")
     public ProcesoDetalleResponse obtener(
-            @PathVariable Integer id,
-            @RequestParam Integer empresaId,
-            @RequestParam Integer usuarioId) {
+            @PathVariable UUID id,
+            @RequestParam UUID empresaId,
+            @RequestParam UUID usuarioId) {
         return procesoService.obtener(id, empresaId, usuarioId);
     }
 
@@ -62,7 +64,7 @@ public class ProcesoController {
             summary = "Editar proceso",
             description = "Actualiza los campos indicados del proceso y registra el cambio en el historial")
     public ProcesoResponse editar(
-            @PathVariable Integer id,
+            @PathVariable UUID id,
             @Valid @RequestBody EditarProcesoRequest request) {
         return procesoService.editar(id, request);
     }
@@ -73,7 +75,7 @@ public class ProcesoController {
             summary = "Eliminar proceso",
             description = "Soft delete: el proceso queda inactivo en BD para mantener trazabilidad histórica")
     public void eliminar(
-            @PathVariable Integer id,
+            @PathVariable UUID id,
             @Valid @RequestBody EliminarProcesoRequest request) {
         procesoService.archivar(id, request);
     }

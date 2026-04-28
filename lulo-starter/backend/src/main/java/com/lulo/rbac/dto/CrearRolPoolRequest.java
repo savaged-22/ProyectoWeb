@@ -1,5 +1,7 @@
 package com.lulo.rbac.dto;
 
+import java.util.UUID;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -14,10 +16,10 @@ import java.util.List;
 public class CrearRolPoolRequest {
 
     @NotNull(message = "El pool es obligatorio")
-    private Integer poolId;
+    private UUID poolId;
 
     @NotNull(message = "El usuario creador es obligatorio")
-    private Integer creadoPorId;
+    private UUID creadoPorId;
 
     @NotBlank(message = "El nombre del rol es obligatorio")
     private String nombre;

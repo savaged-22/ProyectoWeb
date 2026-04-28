@@ -1,5 +1,7 @@
 package com.lulo.process;
 
+import java.util.UUID;
+
 import com.lulo.audit.AuditService;
 import com.lulo.common.exception.ApiException;
 import com.lulo.company.Empresa;
@@ -275,7 +277,7 @@ class ProcesoServiceTest {
 
     // ─── Helper ───────────────────────────────────────────────────────────────
 
-    private Proceso buildProceso(Integer id, String nombre, String estado) {
+    private Proceso buildProceso(UUID id, String nombre, String estado) {
         Proceso p = new Proceso();
         ReflectionTestUtils.setField(p, "id", id);
         p.setEmpresa(empresa);

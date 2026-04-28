@@ -1,5 +1,7 @@
 package com.lulo.rbac;
 
+import java.util.UUID;
+
 import com.lulo.common.audit.AuditableEntity;
 import com.lulo.pool.Pool;
 import jakarta.persistence.*;
@@ -21,8 +23,8 @@ import java.util.Set;
 public class RolPool extends AuditableEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pool_id", nullable = false)

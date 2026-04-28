@@ -1,5 +1,7 @@
 package com.lulo.diagram.lane;
 
+import java.util.UUID;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -8,9 +10,9 @@ import java.util.List;
 
 public interface LaneRepository extends JpaRepository<Lane, Integer> {
 
-    List<Lane> findByProcesoIdOrderByOrdenAsc(Integer procesoId);
+    List<Lane> findByProcesoIdOrderByOrdenAsc(UUID procesoId);
 
-    boolean existsByProcesoIdAndNombre(Integer procesoId, String nombre);
+    boolean existsByProcesoIdAndNombre(UUID procesoId, String nombre);
 
     @Query("""
             SELECT COUNT(l) > 0
@@ -19,7 +21,7 @@ public interface LaneRepository extends JpaRepository<Lane, Integer> {
               AND l.nombre = :nombre
               AND l.id <> :laneId
             """)
-    boolean existsByProcesoIdAndNombreExcluyendoId(@Param("procesoId") Integer procesoId,
+    boolean existsByProcesoIdAndNombreExcluyendoId(@Param("procesoId") UUID procesoId,
                                                    @Param("nombre") String nombre,
-                                                   @Param("laneId") Integer laneId);
+                                                   @Param("laneId") UUID laneId);
 }

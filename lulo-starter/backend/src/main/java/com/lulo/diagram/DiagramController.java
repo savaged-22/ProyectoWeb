@@ -1,5 +1,7 @@
 package com.lulo.diagram;
 
+import java.util.UUID;
+
 import com.lulo.diagram.activity.dto.CrearActividadRequest;
 import com.lulo.diagram.activity.dto.EditarActividadRequest;
 import com.lulo.diagram.activity.dto.EliminarActividadRequest;
@@ -36,7 +38,7 @@ public class DiagramController {
             summary = "Crear actividad",
             description = "Agrega una actividad al proceso. Se especifica nombre, tipo y posición en el canvas")
     public NodoResponse crearActividad(
-            @PathVariable Integer procesoId,
+            @PathVariable UUID procesoId,
             @Valid @RequestBody CrearActividadRequest request) {
         return diagramService.crearActividad(procesoId, request);
     }
@@ -47,7 +49,7 @@ public class DiagramController {
             summary = "Crear gateway",
             description = "Agrega un gateway exclusivo, paralelo o inclusivo al proceso")
     public NodoResponse crearGateway(
-            @PathVariable Integer procesoId,
+            @PathVariable UUID procesoId,
             @Valid @RequestBody CrearGatewayRequest request) {
         return diagramService.crearGateway(procesoId, request);
     }
@@ -58,7 +60,7 @@ public class DiagramController {
             summary = "Crear arco",
             description = "Crea una conexión dirigida entre dos nodos válidos del proceso")
     public ArcoResponse crearArco(
-            @PathVariable Integer procesoId,
+            @PathVariable UUID procesoId,
             @Valid @RequestBody CrearArcoRequest request) {
         return diagramService.crearArco(procesoId, request);
     }
@@ -69,7 +71,7 @@ public class DiagramController {
             summary = "Crear lane",
             description = "Agrega una lane al proceso y opcionalmente la vincula con un rol funcional")
     public LaneResponse crearLane(
-            @PathVariable Integer procesoId,
+            @PathVariable UUID procesoId,
             @Valid @RequestBody CrearLaneRequest request) {
         return diagramService.crearLane(procesoId, request);
     }
@@ -79,8 +81,8 @@ public class DiagramController {
             summary = "Editar actividad",
             description = "Actualiza los campos indicados de la actividad y registra el cambio en el historial del proceso")
     public NodoResponse editarActividad(
-            @PathVariable Integer procesoId,
-            @PathVariable Integer actividadId,
+            @PathVariable UUID procesoId,
+            @PathVariable UUID actividadId,
             @Valid @RequestBody EditarActividadRequest request) {
         return diagramService.editarActividad(procesoId, actividadId, request);
     }
@@ -90,8 +92,8 @@ public class DiagramController {
             summary = "Editar gateway",
             description = "Actualiza tipo, configuración, posición o lane del gateway")
     public NodoResponse editarGateway(
-            @PathVariable Integer procesoId,
-            @PathVariable Integer gatewayId,
+            @PathVariable UUID procesoId,
+            @PathVariable UUID gatewayId,
             @Valid @RequestBody EditarGatewayRequest request) {
         return diagramService.editarGateway(procesoId, gatewayId, request);
     }
@@ -101,8 +103,8 @@ public class DiagramController {
             summary = "Editar arco",
             description = "Actualiza origen, destino o condición del arco manteniendo la consistencia del flujo")
     public ArcoResponse editarArco(
-            @PathVariable Integer procesoId,
-            @PathVariable Integer arcoId,
+            @PathVariable UUID procesoId,
+            @PathVariable UUID arcoId,
             @Valid @RequestBody EditarArcoRequest request) {
         return diagramService.editarArco(procesoId, arcoId, request);
     }
@@ -112,8 +114,8 @@ public class DiagramController {
             summary = "Editar lane",
             description = "Actualiza nombre, orden o rol de proceso asociado a la lane")
     public LaneResponse editarLane(
-            @PathVariable Integer procesoId,
-            @PathVariable Integer laneId,
+            @PathVariable UUID procesoId,
+            @PathVariable UUID laneId,
             @Valid @RequestBody EditarLaneRequest request) {
         return diagramService.editarLane(procesoId, laneId, request);
     }
@@ -124,8 +126,8 @@ public class DiagramController {
             summary = "Eliminar actividad",
             description = "Elimina la actividad y todos sus arcos conectados. El flujo se ajusta automáticamente")
     public void eliminarActividad(
-            @PathVariable Integer procesoId,
-            @PathVariable Integer actividadId,
+            @PathVariable UUID procesoId,
+            @PathVariable UUID actividadId,
             @Valid @RequestBody EliminarActividadRequest request) {
         diagramService.eliminarActividad(procesoId, actividadId, request);
     }
@@ -136,8 +138,8 @@ public class DiagramController {
             summary = "Eliminar gateway",
             description = "Elimina el gateway si no tiene arcos activos conectados")
     public void eliminarGateway(
-            @PathVariable Integer procesoId,
-            @PathVariable Integer gatewayId,
+            @PathVariable UUID procesoId,
+            @PathVariable UUID gatewayId,
             @Valid @RequestBody EliminarGatewayRequest request) {
         diagramService.eliminarGateway(procesoId, gatewayId, request);
     }
@@ -148,8 +150,8 @@ public class DiagramController {
             summary = "Eliminar arco",
             description = "Realiza soft delete del arco para conservar trazabilidad")
     public void eliminarArco(
-            @PathVariable Integer procesoId,
-            @PathVariable Integer arcoId,
+            @PathVariable UUID procesoId,
+            @PathVariable UUID arcoId,
             @Valid @RequestBody EliminarArcoRequest request) {
         diagramService.eliminarArco(procesoId, arcoId, request);
     }
@@ -160,8 +162,8 @@ public class DiagramController {
             summary = "Eliminar lane",
             description = "Elimina la lane siempre que no tenga nodos asignados")
     public void eliminarLane(
-            @PathVariable Integer procesoId,
-            @PathVariable Integer laneId,
+            @PathVariable UUID procesoId,
+            @PathVariable UUID laneId,
             @Valid @RequestBody EliminarLaneRequest request) {
         diagramService.eliminarLane(procesoId, laneId, request);
     }

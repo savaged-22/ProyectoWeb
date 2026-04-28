@@ -1,5 +1,7 @@
 package com.lulo.diagram.lane.dto;
 
+import java.util.UUID;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -9,8 +11,8 @@ import java.time.LocalDateTime;
 @Builder
 public class LaneResponse {
 
-    private Integer       id;
-    private Integer       rolProcesoId;
+    private UUID id;
+    private UUID rolProcesoId;
     private String        rolProcesoNombre;
     private String        nombre;
     private int           orden;

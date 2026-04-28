@@ -1,5 +1,7 @@
 package com.lulo.rbac;
 
+import java.util.UUID;
+
 import com.lulo.common.exception.ApiException;
 import com.lulo.pool.Pool;
 import com.lulo.pool.PoolRepository;
@@ -23,13 +25,13 @@ public class PoolPermissionService {
     private final UsuarioRolPoolRepository usuarioRolPoolRepository;
 
     @Transactional(readOnly = true)
-    public Usuario requireUsuario(Integer usuarioId) {
+    public Usuario requireUsuario(UUID usuarioId) {
         return usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new ApiException("Usuario no encontrado", HttpStatus.NOT_FOUND));
     }
 
     @Transactional(readOnly = true)
-    public Usuario requireUsuarioDeEmpresa(Integer usuarioId, Integer empresaId) {
+    public Usuario requireUsuarioDeEmpresa(UUID usuarioId, UUID empresaId) {
         Usuario usuario = requireUsuario(usuarioId);
         if (!usuario.getEmpresa().getId().equals(empresaId)) {
             throw new ApiException("El usuario no pertenece a esta empresa", HttpStatus.FORBIDDEN);
@@ -38,21 +40,21 @@ public class PoolPermissionService {
     }
 
     @Transactional(readOnly = true)
-    public Pool requirePoolDeEmpresa(Integer poolId, Integer empresaId) {
+    public Pool requirePoolDeEmpresa(UUID poolId, UUID empresaId) {
         return poolRepository.findById(poolId)
                 .filter(pool -> pool.getEmpresa().getId().equals(empresaId))
                 .orElseThrow(() -> new ApiException("El pool no pertenece a esta empresa", HttpStatus.FORBIDDEN));
     }
 
     @Transactional(readOnly = true)
-    public void requirePermisoEnPool(Integer usuarioId, Integer poolId, String codigoPermiso) {
+    public void requirePermisoEnPool(UUID usuarioId, UUID poolId, String codigoPermiso) {
         if (!hasPermisoEnPool(usuarioId, poolId, codigoPermiso)) {
             throw new ApiException("El usuario no tiene permiso " + codigoPermiso + " en este pool", HttpStatus.FORBIDDEN);
         }
     }
 
     @Transactional(readOnly = true)
-    public void requirePermisoEnEmpresa(Integer usuarioId, Integer empresaId, String codigoPermiso) {
+    public void requirePermisoEnEmpresa(UUID usuarioId, UUID empresaId, String codigoPermiso) {
         requireUsuarioDeEmpresa(usuarioId, empresaId);
         if (!hasPermisoEnEmpresa(usuarioId, empresaId, codigoPermiso)) {
             throw new ApiException("El usuario no tiene permiso " + codigoPermiso + " en esta empresa", HttpStatus.FORBIDDEN);
@@ -60,7 +62,7 @@ public class PoolPermissionService {
     }
 
     @Transactional(readOnly = true)
-    public boolean hasPermisoEnPool(Integer usuarioId, Integer poolId, String codigoPermiso) {
+    public boolean hasPermisoEnPool(UUID usuarioId, UUID poolId, String codigoPermiso) {
         List<UsuarioRolPool> asignaciones = usuarioRolPoolRepository.findByUsuarioIdAndPoolId(usuarioId, poolId);
         return asignaciones.stream()
                 .map(UsuarioRolPool::getRolPool)
@@ -71,7 +73,7 @@ public class PoolPermissionService {
     }
 
     @Transactional(readOnly = true)
-    public boolean hasPermisoEnEmpresa(Integer usuarioId, Integer empresaId, String codigoPermiso) {
+    public boolean hasPermisoEnEmpresa(UUID usuarioId, UUID empresaId, String codigoPermiso) {
         return usuarioRolPoolRepository.findByUsuarioIdAndEmpresaId(usuarioId, empresaId).stream()
                 .map(UsuarioRolPool::getRolPool)
                 .filter(RolPool::isActivo)
@@ -81,7 +83,7 @@ public class PoolPermissionService {
     }
 
     @Transactional(readOnly = true)
-    public List<Integer> getPoolIdsConPermisoEnEmpresa(Integer usuarioId, Integer empresaId, String codigoPermiso) {
+    public List<UUID> getPoolIdsConPermisoEnEmpresa(UUID usuarioId, UUID empresaId, String codigoPermiso) {
         Set<Integer> poolIds = new LinkedHashSet<>();
         usuarioRolPoolRepository.findByUsuarioIdAndEmpresaId(usuarioId, empresaId).stream()
                 .map(UsuarioRolPool::getRolPool)
@@ -93,7 +95,7 @@ public class PoolPermissionService {
     }
 
     @Transactional(readOnly = true)
-    public List<Integer> getPoolIdsAsignadosEnEmpresa(Integer usuarioId, Integer empresaId) {
+    public List<UUID> getPoolIdsAsignadosEnEmpresa(UUID usuarioId, UUID empresaId) {
         Set<Integer> poolIds = new LinkedHashSet<>();
         usuarioRolPoolRepository.findByUsuarioIdAndEmpresaId(usuarioId, empresaId).stream()
                 .map(UsuarioRolPool::getRolPool)

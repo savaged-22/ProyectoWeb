@@ -1,5 +1,7 @@
 package com.lulo.diagram.gateway.dto;
 
+import java.util.UUID;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
@@ -13,9 +15,9 @@ public class EditarGatewayRequest {
 
     // TODO: reemplazar por el usuario extraído del token JWT (HU-Auth)
     @NotNull(message = "El usuario que edita es obligatorio")
-    private Integer editadoPorId;
+    private UUID editadoPorId;
 
-    private Integer laneId;
+    private UUID laneId;
     private String label;
     private Float posX;
     private Float posY;

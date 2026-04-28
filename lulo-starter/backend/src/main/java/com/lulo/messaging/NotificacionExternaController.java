@@ -1,5 +1,7 @@
 package com.lulo.messaging;
 
+import java.util.UUID;
+
 import com.lulo.messaging.dto.NotificacionExternaResponse;
 import com.lulo.messaging.dto.RegistrarNotificacionExternaRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,7 +28,7 @@ public class NotificacionExternaController {
                description = "Registra un destino (webhook, email o queue) al que se notificará "
                        + "cuando el proceso lance un mensaje con el nombre indicado.")
     public NotificacionExternaResponse registrar(
-            @PathVariable Integer procesoId,
+            @PathVariable UUID procesoId,
             @Valid @RequestBody RegistrarNotificacionExternaRequest request) {
         return notificacionExternaService.registrar(procesoId, request);
     }
@@ -34,7 +36,7 @@ public class NotificacionExternaController {
     @GetMapping
     @Operation(summary = "Listar notificaciones externas (HU-26)",
                description = "Lista los destinos de notificación activos de un proceso.")
-    public List<NotificacionExternaResponse> listar(@PathVariable Integer procesoId) {
+    public List<NotificacionExternaResponse> listar(@PathVariable UUID procesoId) {
         return notificacionExternaService.listar(procesoId);
     }
 
@@ -42,8 +44,8 @@ public class NotificacionExternaController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Desactivar notificación externa (HU-26)",
                description = "Desactiva un destino de notificación.")
-    public void desactivar(@PathVariable Integer procesoId,
-                           @PathVariable Integer notificacionId) {
+    public void desactivar(@PathVariable UUID procesoId,
+                           @PathVariable UUID notificacionId) {
         notificacionExternaService.desactivar(notificacionId);
     }
 }

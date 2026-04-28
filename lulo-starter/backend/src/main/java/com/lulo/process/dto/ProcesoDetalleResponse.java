@@ -1,5 +1,7 @@
 package com.lulo.process.dto;
 
+import java.util.UUID;
+
 import com.lulo.diagram.arc.dto.ArcoResponse;
 import com.lulo.diagram.lane.dto.LaneResponse;
 import com.lulo.diagram.node.dto.NodoResponse;
@@ -14,12 +16,12 @@ import java.util.List;
 public class ProcesoDetalleResponse {
 
     // ── Datos del proceso ─────────────────────────────────────────────────────
-    private Integer       id;
-    private Integer       empresaId;
+    private UUID id;
+    private UUID empresaId;
     private String        empresaNombre;
-    private Integer       poolId;
+    private UUID poolId;
     private String        poolNombre;
-    private Integer       creadoPorId;
+    private UUID creadoPorId;
     private String        creadoPorEmail;
     private String        nombre;
     private String        descripcion;

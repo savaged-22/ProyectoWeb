@@ -1,5 +1,7 @@
 package com.lulo.diagram.arc;
 
+import java.util.UUID;
+
 import com.lulo.common.audit.AuditableEntity;
 import com.lulo.diagram.node.Nodo;
 import com.lulo.process.Proceso;
@@ -18,8 +20,8 @@ import org.hibernate.type.SqlTypes;
 public class Arco extends AuditableEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "proceso_id", nullable = false)

@@ -1,8 +1,8 @@
 CREATE TABLE proceso (
-    id                 SERIAL PRIMARY KEY,
-    empresa_id         INTEGER      NOT NULL REFERENCES empresa(id),
-    pool_id            INTEGER      NOT NULL REFERENCES pool(id),
-    created_by_user_id INTEGER      NOT NULL REFERENCES usuario(id),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    empresa_id UUID      NOT NULL REFERENCES empresa(id),
+    pool_id UUID      NOT NULL REFERENCES pool(id),
+    created_by_user_id UUID      NOT NULL REFERENCES usuario(id),
     nombre             VARCHAR(255) NOT NULL,
     descripcion        TEXT,
     categoria          VARCHAR(100),

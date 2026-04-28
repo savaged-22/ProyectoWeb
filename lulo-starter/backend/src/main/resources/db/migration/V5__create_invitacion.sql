@@ -1,8 +1,8 @@
 CREATE TABLE invitacion_usuario (
-    id                 SERIAL PRIMARY KEY,
-    empresa_id         INTEGER      NOT NULL REFERENCES empresa(id),
-    rol_pool_id        INTEGER      NOT NULL REFERENCES rol_pool(id),
-    created_by_user_id INTEGER      NOT NULL REFERENCES usuario(id),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    empresa_id UUID      NOT NULL REFERENCES empresa(id),
+    rol_pool_id UUID      NOT NULL REFERENCES rol_pool(id),
+    created_by_user_id UUID      NOT NULL REFERENCES usuario(id),
     email              VARCHAR(255) NOT NULL,
     token_hash         VARCHAR(255) NOT NULL,
     estado             VARCHAR(20)  NOT NULL DEFAULT 'pendiente',

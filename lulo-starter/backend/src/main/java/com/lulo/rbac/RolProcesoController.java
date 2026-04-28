@@ -1,5 +1,7 @@
 package com.lulo.rbac;
 
+import java.util.UUID;
+
 import com.lulo.rbac.dto.CrearRolProcesoRequest;
 import com.lulo.rbac.dto.EditarRolProcesoRequest;
 import com.lulo.rbac.dto.EliminarRolProcesoRequest;
@@ -34,8 +36,8 @@ public class RolProcesoController {
     @Operation(
             summary = "Consultar roles de proceso",
             description = "Lista los roles funcionales activos o inactivos de una empresa")
-    public List<RolProcesoResponse> listar(@RequestParam Integer empresaId,
-                                           @RequestParam Integer usuarioId,
+    public List<RolProcesoResponse> listar(@RequestParam UUID empresaId,
+                                           @RequestParam UUID usuarioId,
                                            @RequestParam(defaultValue = "true") Boolean soloActivos) {
         return rolProcesoService.listar(empresaId, usuarioId, soloActivos);
     }
@@ -53,7 +55,7 @@ public class RolProcesoController {
     @Operation(
             summary = "Editar rol de proceso",
             description = "Actualiza nombre o descripción del rol manteniendo coherencia de referencias")
-    public RolProcesoResponse editar(@PathVariable Integer rolProcesoId,
+    public RolProcesoResponse editar(@PathVariable UUID rolProcesoId,
                                      @Valid @RequestBody EditarRolProcesoRequest request) {
         return rolProcesoService.editar(rolProcesoId, request);
     }
@@ -63,7 +65,7 @@ public class RolProcesoController {
     @Operation(
             summary = "Eliminar rol de proceso",
             description = "Realiza soft delete del rol solo si no está asignado en ninguna lane")
-    public void eliminar(@PathVariable Integer rolProcesoId,
+    public void eliminar(@PathVariable UUID rolProcesoId,
                          @Valid @RequestBody EliminarRolProcesoRequest request) {
         rolProcesoService.eliminar(rolProcesoId, request);
     }

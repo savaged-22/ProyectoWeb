@@ -1,5 +1,7 @@
 package com.lulo.process.dto;
 
+import java.util.UUID;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
@@ -13,7 +15,7 @@ public class EditarProcesoRequest {
 
     // TODO: reemplazar por el usuario extraído del token JWT (HU-Auth)
     @NotNull(message = "El usuario que edita es obligatorio")
-    private Integer editadoPorId;
+    private UUID editadoPorId;
 
     // Campos opcionales: solo se actualiza lo que llega (semántica PATCH)
     private String nombre;

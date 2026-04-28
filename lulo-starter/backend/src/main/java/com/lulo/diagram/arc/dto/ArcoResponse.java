@@ -1,5 +1,7 @@
 package com.lulo.diagram.arc.dto;
 
+import java.util.UUID;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -9,9 +11,9 @@ import java.time.LocalDateTime;
 @Builder
 public class ArcoResponse {
 
-    private Integer       id;
-    private Integer       fromNodoId;
-    private Integer       toNodoId;
+    private UUID id;
+    private UUID fromNodoId;
+    private UUID toNodoId;
     private String        condicionExpr;
     private String        propsJson;
     private boolean       activo;

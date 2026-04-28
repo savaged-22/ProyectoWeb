@@ -1,5 +1,7 @@
 package com.lulo.messaging.dto;
 
+import java.util.UUID;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -10,10 +12,10 @@ import lombok.Setter;
 public class EnviarMensajeRequest {
 
     @NotNull
-    private Integer empresaId;
+    private UUID empresaId;
 
     @NotNull
-    private Integer procesoOrigenId;
+    private UUID procesoOrigenId;
 
     @NotBlank
     private String nombreMensaje;

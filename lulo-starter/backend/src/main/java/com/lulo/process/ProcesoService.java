@@ -1,5 +1,7 @@
 package com.lulo.process;
 
+import java.util.UUID;
+
 import com.lulo.audit.AuditService;
 import com.lulo.common.exception.ApiException;
 import com.lulo.company.EmpresaRepository;
@@ -48,8 +50,8 @@ public class ProcesoService {
     // ── Listar con filtros ────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public Page<ProcesoResponse> listar(Integer empresaId,
-                                        Integer usuarioId,
+    public Page<ProcesoResponse> listar(UUID empresaId,
+                                        UUID usuarioId,
                                         String estado,
                                         String categoria,
                                         String nombre,
@@ -64,7 +66,7 @@ public class ProcesoService {
         if (categoria != null) spec = spec.and(ProcesoSpec.conCategoria(categoria));
         if (nombre    != null) spec = spec.and(ProcesoSpec.nombreContiene(nombre));
 
-        List<Integer> poolIdsPropios = poolPermissionService.getPoolIdsConPermisoEnEmpresa(usuarioId, empresaId, "PROCESO_VER");
+        List<UUID> poolIdsPropios = poolPermissionService.getPoolIdsConPermisoEnEmpresa(usuarioId, empresaId, "PROCESO_VER");
         List<Proceso> visibles = new ArrayList<>();
         if (!poolIdsPropios.isEmpty()) {
             visibles.addAll(procesoRepository.findAll(spec).stream()
@@ -89,7 +91,7 @@ public class ProcesoService {
     // ── Obtener detalle con diagrama ──────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public ProcesoDetalleResponse obtener(Integer procesoId, Integer empresaId, Integer usuarioId) {
+    public ProcesoDetalleResponse obtener(UUID procesoId, UUID empresaId, UUID usuarioId) {
         poolPermissionService.requireUsuarioDeEmpresa(usuarioId, empresaId);
 
         Proceso proceso = procesoRepository.findByIdAndActivoTrue(procesoId)
@@ -165,7 +167,7 @@ public class ProcesoService {
     // ── Editar ───────────────────────────────────────────────────────────────
 
     @Transactional
-    public ProcesoResponse editar(Integer procesoId, EditarProcesoRequest request) {
+    public ProcesoResponse editar(UUID procesoId, EditarProcesoRequest request) {
 
         Proceso proceso = procesoRepository.findByIdAndActivoTrue(procesoId)
                 .orElseThrow(() -> new ApiException("Proceso no encontrado", HttpStatus.NOT_FOUND));
@@ -207,7 +209,7 @@ public class ProcesoService {
     // ── Archivar (soft delete) ────────────────────────────────────────────────
 
     @Transactional
-    public void archivar(Integer procesoId, EliminarProcesoRequest request) {
+    public void archivar(UUID procesoId, EliminarProcesoRequest request) {
 
         Proceso proceso = procesoRepository.findByIdAndActivoTrue(procesoId)
                 .orElseThrow(() -> new ApiException("Proceso no encontrado", HttpStatus.NOT_FOUND));

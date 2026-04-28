@@ -1,5 +1,7 @@
 package com.lulo.messaging;
 
+import java.util.UUID;
+
 import com.lulo.company.Empresa;
 import com.lulo.process.Proceso;
 import jakarta.persistence.*;
@@ -17,8 +19,8 @@ import java.time.LocalDateTime;
 public class MensajeProceso {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "empresa_id", nullable = false)

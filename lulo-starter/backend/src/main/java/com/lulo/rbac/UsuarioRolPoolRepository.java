@@ -1,5 +1,7 @@
 package com.lulo.rbac;
 
+import java.util.UUID;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -9,18 +11,18 @@ import java.util.Optional;
 
 public interface UsuarioRolPoolRepository extends JpaRepository<UsuarioRolPool, UsuarioRolPoolId> {
 
-    List<UsuarioRolPool> findByIdUsuarioId(Integer usuarioId);
+    List<UsuarioRolPool> findByIdUsuarioId(UUID usuarioId);
 
-    List<UsuarioRolPool> findByIdRolPoolId(Integer rolPoolId);
+    List<UsuarioRolPool> findByIdRolPoolId(UUID rolPoolId);
 
-    boolean existsByIdUsuarioId(Integer usuarioId);
+    boolean existsByIdUsuarioId(UUID usuarioId);
 
-    Optional<UsuarioRolPool> findByIdUsuarioIdAndIdRolPoolId(Integer usuarioId, Integer rolPoolId);
+    Optional<UsuarioRolPool> findByIdUsuarioIdAndIdRolPoolId(UUID usuarioId, UUID rolPoolId);
 
-    boolean existsByIdUsuarioIdAndIdRolPoolId(Integer usuarioId, Integer rolPoolId);
+    boolean existsByIdUsuarioIdAndIdRolPoolId(UUID usuarioId, UUID rolPoolId);
 
     // Verifica si un rol tiene usuarios asignados antes de eliminarlo
-    boolean existsByIdRolPoolId(Integer rolPoolId);
+    boolean existsByIdRolPoolId(UUID rolPoolId);
 
     // Obtiene todos los roles que un usuario tiene en un pool concreto
     @Query("""
@@ -30,8 +32,8 @@ public interface UsuarioRolPoolRepository extends JpaRepository<UsuarioRolPool, 
               AND rp.pool.id = :poolId
             """)
     List<UsuarioRolPool> findByUsuarioIdAndPoolId(
-            @Param("usuarioId") Integer usuarioId,
-            @Param("poolId") Integer poolId);
+            @Param("usuarioId") UUID usuarioId,
+            @Param("poolId") UUID poolId);
 
     @Query("""
             SELECT urp FROM UsuarioRolPool urp
@@ -41,6 +43,6 @@ public interface UsuarioRolPoolRepository extends JpaRepository<UsuarioRolPool, 
               AND p.empresa.id = :empresaId
             """)
     List<UsuarioRolPool> findByUsuarioIdAndEmpresaId(
-            @Param("usuarioId") Integer usuarioId,
-            @Param("empresaId") Integer empresaId);
+            @Param("usuarioId") UUID usuarioId,
+            @Param("empresaId") UUID empresaId);
 }

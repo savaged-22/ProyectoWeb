@@ -1,5 +1,7 @@
 package com.lulo.sharing.dto;
 
+import java.util.UUID;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -9,10 +11,10 @@ import java.time.LocalDateTime;
 @Builder
 public class ProcesoCompartidoResponse {
 
-    private Integer procesoId;
-    private Integer poolDestinoId;
+    private UUID procesoId;
+    private UUID poolDestinoId;
     private String poolDestinoNombre;
-    private Integer creadoPorId;
+    private UUID creadoPorId;
     private String creadoPorEmail;
     private String permiso;
     private LocalDateTime createdAt;
