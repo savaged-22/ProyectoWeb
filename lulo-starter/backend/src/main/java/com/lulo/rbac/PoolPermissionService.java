@@ -84,7 +84,7 @@ public class PoolPermissionService {
 
     @Transactional(readOnly = true)
     public List<UUID> getPoolIdsConPermisoEnEmpresa(UUID usuarioId, UUID empresaId, String codigoPermiso) {
-        Set<Integer> poolIds = new LinkedHashSet<>();
+        Set<UUID> poolIds = new LinkedHashSet<>();
         usuarioRolPoolRepository.findByUsuarioIdAndEmpresaId(usuarioId, empresaId).stream()
                 .map(UsuarioRolPool::getRolPool)
                 .filter(RolPool::isActivo)
@@ -96,7 +96,7 @@ public class PoolPermissionService {
 
     @Transactional(readOnly = true)
     public List<UUID> getPoolIdsAsignadosEnEmpresa(UUID usuarioId, UUID empresaId) {
-        Set<Integer> poolIds = new LinkedHashSet<>();
+        Set<UUID> poolIds = new LinkedHashSet<>();
         usuarioRolPoolRepository.findByUsuarioIdAndEmpresaId(usuarioId, empresaId).stream()
                 .map(UsuarioRolPool::getRolPool)
                 .filter(RolPool::isActivo)

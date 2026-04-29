@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface ActividadRepository extends JpaRepository<Actividad, Integer> {
+public interface ActividadRepository extends JpaRepository<Actividad, UUID> {
 
     List<Actividad> findByProcesoId(UUID procesoId);
 

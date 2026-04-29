@@ -24,6 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -32,6 +33,12 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("EmpresaService - Pruebas unitarias")
 class EmpresaServiceTest {
+
+    // ── UUIDs de prueba ───────────────────────────────────────────────────────
+    private static final UUID EMPRESA_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    private static final UUID USUARIO_ID = UUID.fromString("00000000-0000-0000-0000-000000000002");
+    private static final UUID POOL_ID    = UUID.fromString("00000000-0000-0000-0000-000000000003");
+    private static final UUID ROL_ID     = UUID.fromString("00000000-0000-0000-0000-000000000004");
 
     @Mock private EmpresaRepository        empresaRepository;
     @Mock private UsuarioRepository        usuarioRepository;
@@ -64,20 +71,20 @@ class EmpresaServiceTest {
     void registrar_exitoso() {
         // Arrange
         Empresa empresaGuardada = new Empresa();
-        ReflectionTestUtils.setField(empresaGuardada, "id", 1);
+        ReflectionTestUtils.setField(empresaGuardada, "id", EMPRESA_ID);
         empresaGuardada.setNombre("Empresa Demo SAS");
         empresaGuardada.setNit("900111222-1");
 
         Usuario adminGuardado = new Usuario();
-        ReflectionTestUtils.setField(adminGuardado, "id", 1);
+        ReflectionTestUtils.setField(adminGuardado, "id", USUARIO_ID);
         adminGuardado.setEmail("admin@demo.com");
 
         Pool poolGuardado = new Pool();
-        ReflectionTestUtils.setField(poolGuardado, "id", 1);
+        ReflectionTestUtils.setField(poolGuardado, "id", POOL_ID);
         poolGuardado.setNombre("Principal");
 
         RolPool rolGuardado = new RolPool();
-        ReflectionTestUtils.setField(rolGuardado, "id", 1);
+        ReflectionTestUtils.setField(rolGuardado, "id", ROL_ID);
 
         when(empresaRepository.existsByNit("900111222-1")).thenReturn(false);
         when(usuarioRepository.existsByEmail("admin@demo.com")).thenReturn(false);
@@ -93,9 +100,9 @@ class EmpresaServiceTest {
 
         // Assert
         assertThat(response).isNotNull();
-        assertThat(response.getEmpresaId()).isEqualTo(1);
+        assertThat(response.getEmpresaId()).isEqualTo(EMPRESA_ID);
         assertThat(response.getEmpresaNombre()).isEqualTo("Empresa Demo SAS");
-        assertThat(response.getUsuarioId()).isEqualTo(1);
+        assertThat(response.getUsuarioId()).isEqualTo(USUARIO_ID);
         assertThat(response.getEmailAdmin()).isEqualTo("admin@demo.com");
         assertThat(response.getPoolDefault()).isEqualTo("Principal");
         assertThat(response.getMensaje()).isEqualTo("Empresa registrada exitosamente");
@@ -150,15 +157,15 @@ class EmpresaServiceTest {
     @DisplayName("Pool creado debe llamarse 'Principal'")
     void registrar_poolDefecto_nombrePrincipal() {
         Empresa e = new Empresa();
-        ReflectionTestUtils.setField(e, "id", 1);
+        ReflectionTestUtils.setField(e, "id", EMPRESA_ID);
         Usuario u = new Usuario();
-        ReflectionTestUtils.setField(u, "id", 1);
+        ReflectionTestUtils.setField(u, "id", USUARIO_ID);
         u.setEmail("admin@demo.com");
         Pool poolCapturado = new Pool();
-        ReflectionTestUtils.setField(poolCapturado, "id", 1);
+        ReflectionTestUtils.setField(poolCapturado, "id", POOL_ID);
         poolCapturado.setNombre("Principal");
         RolPool rol = new RolPool();
-        ReflectionTestUtils.setField(rol, "id", 1);
+        ReflectionTestUtils.setField(rol, "id", ROL_ID);
 
         when(empresaRepository.existsByNit(any())).thenReturn(false);
         when(usuarioRepository.existsByEmail(any())).thenReturn(false);
@@ -181,19 +188,19 @@ class EmpresaServiceTest {
     @DisplayName("Rol administrador se crea como propietario con todos los permisos del catálogo")
     void registrar_rolAdmin_esPropietarioConTodosLosPermisos() {
         Empresa e = new Empresa();
-        ReflectionTestUtils.setField(e, "id", 1);
+        ReflectionTestUtils.setField(e, "id", EMPRESA_ID);
         Usuario u = new Usuario();
-        ReflectionTestUtils.setField(u, "id", 1);
+        ReflectionTestUtils.setField(u, "id", USUARIO_ID);
         u.setEmail("admin@demo.com");
         Pool pool = new Pool();
-        ReflectionTestUtils.setField(pool, "id", 1);
+        ReflectionTestUtils.setField(pool, "id", POOL_ID);
         pool.setNombre("Principal");
 
         Permiso p1 = new Permiso(); Permiso p2 = new Permiso(); Permiso p3 = new Permiso();
         List<Permiso> permisos = List.of(p1, p2, p3);
 
         RolPool rolCapturado = new RolPool();
-        ReflectionTestUtils.setField(rolCapturado, "id", 1);
+        ReflectionTestUtils.setField(rolCapturado, "id", ROL_ID);
 
         when(empresaRepository.existsByNit(any())).thenReturn(false);
         when(usuarioRepository.existsByEmail(any())).thenReturn(false);
@@ -206,7 +213,7 @@ class EmpresaServiceTest {
             assertThat(rol.isEsPropietario()).isTrue();
             assertThat(rol.isActivo()).isTrue();
             assertThat(rol.getPermisos()).hasSize(3);
-            ReflectionTestUtils.setField(rol, "id", 1);
+            ReflectionTestUtils.setField(rol, "id", ROL_ID);
             return rol;
         });
         when(usuarioRolPoolRepository.save(any())).thenReturn(new UsuarioRolPool());

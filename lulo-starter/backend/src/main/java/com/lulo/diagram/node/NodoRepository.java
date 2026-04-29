@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface NodoRepository extends JpaRepository<Nodo, Integer> {
+public interface NodoRepository extends JpaRepository<Nodo, UUID> {
 
     // Devuelve todos los nodos del proceso (polimórfico: incluye Actividad y Gateway)
     List<Nodo> findByProcesoId(UUID procesoId);
