@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-public interface ArcoRepository extends JpaRepository<Arco, Integer> {
+public interface ArcoRepository extends JpaRepository<Arco, UUID> {
 
     List<Arco> findByProcesoIdAndActivoTrue(UUID procesoId);
 

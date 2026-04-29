@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface GatewayRepository extends JpaRepository<Gateway, Integer> {
+public interface GatewayRepository extends JpaRepository<Gateway, UUID> {
 
     List<Gateway> findByProcesoId(UUID procesoId);
 

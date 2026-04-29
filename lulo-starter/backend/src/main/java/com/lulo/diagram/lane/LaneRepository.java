@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface LaneRepository extends JpaRepository<Lane, Integer> {
+public interface LaneRepository extends JpaRepository<Lane, UUID> {
 
     List<Lane> findByProcesoIdOrderByOrdenAsc(UUID procesoId);
 

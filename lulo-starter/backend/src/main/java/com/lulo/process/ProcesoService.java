@@ -253,7 +253,7 @@ public class ProcesoService {
     }
 
     private List<Proceso> deduplicar(List<Proceso> procesos) {
-        Set<Integer> ids = new LinkedHashSet<>();
+        Set<UUID> ids = new LinkedHashSet<>();
         List<Proceso> deduplicados = new ArrayList<>();
         for (Proceso proceso : procesos) {
             if (ids.add(proceso.getId())) {
