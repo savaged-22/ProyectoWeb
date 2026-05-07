@@ -26,6 +26,7 @@ import java.util.UUID;
 public class InvitacionService {
 
     private static final int HORAS_EXPIRACION = 72;
+    private static final String ESTADO_PENDIENTE = "pendiente";
 
     private final InvitacionUsuarioRepository invitacionRepository;
     private final EmpresaRepository           empresaRepository;
@@ -53,7 +54,7 @@ public class InvitacionService {
                 .orElseThrow(() -> new ApiException("Usuario que invita no encontrado", HttpStatus.NOT_FOUND));
 
         // No puede haber una invitación pendiente para el mismo correo en la misma empresa
-        if (invitacionRepository.existsByEmailAndEstado(request.getEmailInvitado(), "pendiente")) {
+        if (invitacionRepository.existsByEmailAndEstado(request.getEmailInvitado(), ESTADO_PENDIENTE)) {
             throw new ApiException(
                     "Ya existe una invitación pendiente para: " + request.getEmailInvitado(),
                     HttpStatus.CONFLICT);
@@ -76,7 +77,7 @@ public class InvitacionService {
         invitacion.setCreatedByUser(invitadoPor);
         invitacion.setEmail(request.getEmailInvitado());
         invitacion.setTokenHash(token);
-        invitacion.setEstado("pendiente");
+        invitacion.setEstado(ESTADO_PENDIENTE);
         invitacion.setExpiresAt(expira);
         invitacion = invitacionRepository.save(invitacion);
 
@@ -98,7 +99,7 @@ public class InvitacionService {
         InvitacionUsuario invitacion = invitacionRepository.findByTokenHash(token)
                 .orElseThrow(() -> new ApiException("Token de invitación inválido", HttpStatus.NOT_FOUND));
 
-        if (!"pendiente".equals(invitacion.getEstado())) {
+        if (!ESTADO_PENDIENTE.equals(invitacion.getEstado())) {
             throw new ApiException("La invitación ya fue utilizada o cancelada", HttpStatus.CONFLICT);
         }
 

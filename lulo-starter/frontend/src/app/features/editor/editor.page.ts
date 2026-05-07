@@ -16,5 +16,5 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 })
 export class EditorPage {
   processId = this.route.snapshot.paramMap.get('id');
-  constructor(private route: ActivatedRoute) {}
+  constructor(private readonly route: ActivatedRoute) {}
 }

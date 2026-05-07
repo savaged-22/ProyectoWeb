@@ -28,6 +28,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ProcesoService {
 
+    private static final String PROCESO_NO_ENCONTRADO = "Proceso no encontrado";
+    private static final String USUARIO_NO_ENCONTRADO = "Usuario no encontrado";
+    private static final String USUARIO_NO_EMPRESA = "El usuario no pertenece a esta empresa";
+
     private final ProcesoRepository  procesoRepository;
     private final EmpresaRepository  empresaRepository;
     private final PoolRepository     poolRepository;
@@ -60,7 +64,7 @@ public class ProcesoService {
     public ProcesoDetalleResponse obtener(Integer procesoId, Integer empresaId) {
 
         Proceso proceso = procesoRepository.findByIdAndActivoTrue(procesoId)
-                .orElseThrow(() -> new ApiException("Proceso no encontrado", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ApiException(PROCESO_NO_ENCONTRADO, HttpStatus.NOT_FOUND));
 
         if (!proceso.getEmpresa().getId().equals(empresaId)) {
             throw new ApiException("El proceso no pertenece a esta empresa", HttpStatus.FORBIDDEN);
@@ -104,11 +108,11 @@ public class ProcesoService {
         }
 
         Usuario creadoPor = usuarioRepository.findById(request.getCreadoPorId())
-                .orElseThrow(() -> new ApiException("Usuario no encontrado", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ApiException(USUARIO_NO_ENCONTRADO, HttpStatus.NOT_FOUND));
 
         // El usuario debe pertenecer a la empresa
         if (!creadoPor.getEmpresa().getId().equals(request.getEmpresaId())) {
-            throw new ApiException("El usuario no pertenece a esta empresa", HttpStatus.FORBIDDEN);
+            throw new ApiException(USUARIO_NO_EMPRESA, HttpStatus.FORBIDDEN);
         }
 
         String estado = request.getEstado() != null ? request.getEstado() : "borrador";
@@ -133,14 +137,14 @@ public class ProcesoService {
     public ProcesoResponse editar(Integer procesoId, EditarProcesoRequest request) {
 
         Proceso proceso = procesoRepository.findByIdAndActivoTrue(procesoId)
-                .orElseThrow(() -> new ApiException("Proceso no encontrado", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ApiException(PROCESO_NO_ENCONTRADO, HttpStatus.NOT_FOUND));
 
         Usuario editadoPor = usuarioRepository.findById(request.getEditadoPorId())
-                .orElseThrow(() -> new ApiException("Usuario no encontrado", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ApiException(USUARIO_NO_ENCONTRADO, HttpStatus.NOT_FOUND));
 
         // El usuario debe pertenecer a la misma empresa que el proceso
         if (!editadoPor.getEmpresa().getId().equals(proceso.getEmpresa().getId())) {
-            throw new ApiException("El usuario no pertenece a esta empresa", HttpStatus.FORBIDDEN);
+            throw new ApiException(USUARIO_NO_EMPRESA, HttpStatus.FORBIDDEN);
         }
 
         // TODO: verificar permiso PROCESO_EDITAR del usuario en el pool (HU-Auth)
@@ -178,14 +182,14 @@ public class ProcesoService {
     public void archivar(Integer procesoId, EliminarProcesoRequest request) {
 
         Proceso proceso = procesoRepository.findByIdAndActivoTrue(procesoId)
-                .orElseThrow(() -> new ApiException("Proceso no encontrado", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ApiException(PROCESO_NO_ENCONTRADO, HttpStatus.NOT_FOUND));
 
         Usuario eliminadoPor = usuarioRepository.findById(request.getEliminadoPorId())
-                .orElseThrow(() -> new ApiException("Usuario no encontrado", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ApiException(USUARIO_NO_ENCONTRADO, HttpStatus.NOT_FOUND));
 
         // El usuario debe pertenecer a la misma empresa que el proceso
         if (!eliminadoPor.getEmpresa().getId().equals(proceso.getEmpresa().getId())) {
-            throw new ApiException("El usuario no pertenece a esta empresa", HttpStatus.FORBIDDEN);
+            throw new ApiException(USUARIO_NO_EMPRESA, HttpStatus.FORBIDDEN);
         }
 
         // TODO: verificar permiso PROCESO_ELIMINAR del usuario en el pool (HU-Auth)

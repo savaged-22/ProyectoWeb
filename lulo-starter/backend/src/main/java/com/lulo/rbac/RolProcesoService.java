@@ -21,6 +21,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class RolProcesoService {
 
+    private static final String TIPO_AUDIT = "ROL_PROCESO";
+
     private final RolProcesoRepository rolProcesoRepository;
     private final EmpresaRepository empresaRepository;
     private final UsuarioRepository usuarioRepository;
@@ -50,7 +52,7 @@ public class RolProcesoService {
         auditService.registrar(
                 empresa,
                 creadoPor,
-                "ROL_PROCESO",
+                TIPO_AUDIT,
                 rolProceso.getId(),
                 "CREAR",
                 null,
@@ -86,7 +88,7 @@ public class RolProcesoService {
         auditService.registrar(
                 rolProceso.getEmpresa(),
                 editadoPor,
-                "ROL_PROCESO",
+                TIPO_AUDIT,
                 rolProceso.getId(),
                 "EDITAR",
                 antes,
@@ -118,7 +120,7 @@ public class RolProcesoService {
         auditService.registrar(
                 rolProceso.getEmpresa(),
                 eliminadoPor,
-                "ROL_PROCESO",
+                TIPO_AUDIT,
                 rolProceso.getId(),
                 "ELIMINAR",
                 antes,

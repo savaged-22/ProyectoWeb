@@ -40,6 +40,14 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class DiagramService {
 
+    private static final String LANE_NO_ENCONTRADA = "Lane no encontrada";
+    private static final String LANE_NO_PERTENECE = "La lane no pertenece a este proceso";
+    private static final String TIPO_GATEWAY = "GATEWAY";
+    private static final String USUARIO_NO_ENCONTRADO = "Usuario no encontrado";
+    private static final String USUARIO_NO_EMPRESA = "El usuario no pertenece a esta empresa";
+    private static final String ACCION_EDITAR = "EDITAR";
+    private static final String ACCION_ELIMINAR = "ELIMINAR";
+
     private final ProcesoRepository   procesoRepository;
     private final LaneRepository      laneRepository;
     private final NodoRepository      nodoRepository;
@@ -60,10 +68,10 @@ public class DiagramService {
         Lane lane = null;
         if (request.getLaneId() != null) {
             lane = laneRepository.findById(request.getLaneId())
-                    .orElseThrow(() -> new ApiException("Lane no encontrada", HttpStatus.NOT_FOUND));
+                    .orElseThrow(() -> new ApiException(LANE_NO_ENCONTRADA, HttpStatus.NOT_FOUND));
             // La lane debe pertenecer al mismo proceso
             if (!lane.getProceso().getId().equals(procesoId)) {
-                throw new ApiException("La lane no pertenece a este proceso", HttpStatus.FORBIDDEN);
+                throw new ApiException(LANE_NO_PERTENECE, HttpStatus.FORBIDDEN);
             }
         }
 
@@ -106,7 +114,7 @@ public class DiagramService {
         auditService.registrar(
                 proceso.getEmpresa(),
                 creadoPor,
-                "GATEWAY",
+                TIPO_GATEWAY,
                 gateway.getId(),
                 "CREAR",
                 null,
@@ -130,10 +138,10 @@ public class DiagramService {
         }
 
         var editadoPor = usuarioRepository.findById(request.getEditadoPorId())
-                .orElseThrow(() -> new ApiException("Usuario no encontrado", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ApiException(USUARIO_NO_ENCONTRADO, HttpStatus.NOT_FOUND));
 
         if (!editadoPor.getEmpresa().getId().equals(actividad.getProceso().getEmpresa().getId())) {
-            throw new ApiException("El usuario no pertenece a esta empresa", HttpStatus.FORBIDDEN);
+            throw new ApiException(USUARIO_NO_EMPRESA, HttpStatus.FORBIDDEN);
         }
 
         // TODO: verificar permiso DIAGRAMA_EDITAR del usuario en el pool (HU-Auth)
@@ -148,9 +156,9 @@ public class DiagramService {
 
         if (request.getLaneId() != null) {
             Lane lane = laneRepository.findById(request.getLaneId())
-                    .orElseThrow(() -> new ApiException("Lane no encontrada", HttpStatus.NOT_FOUND));
+                    .orElseThrow(() -> new ApiException(LANE_NO_ENCONTRADA, HttpStatus.NOT_FOUND));
             if (!lane.getProceso().getId().equals(procesoId)) {
-                throw new ApiException("La lane no pertenece a este proceso", HttpStatus.FORBIDDEN);
+                throw new ApiException(LANE_NO_PERTENECE, HttpStatus.FORBIDDEN);
             }
             actividad.setLane(lane);
         }
@@ -162,7 +170,7 @@ public class DiagramService {
                 editadoPor,
                 "ACTIVIDAD",
                 actividad.getId(),
-                "EDITAR",
+                ACCION_EDITAR,
                 antes,
                 snapshotActividad(actividad)
         );
@@ -198,9 +206,9 @@ public class DiagramService {
         auditService.registrar(
                 gateway.getProceso().getEmpresa(),
                 editadoPor,
-                "GATEWAY",
+                TIPO_GATEWAY,
                 gateway.getId(),
-                "EDITAR",
+                ACCION_EDITAR,
                 antes,
                 snapshotGateway(gateway)
         );
@@ -222,10 +230,10 @@ public class DiagramService {
         }
 
         var eliminadoPor = usuarioRepository.findById(request.getEliminadoPorId())
-                .orElseThrow(() -> new ApiException("Usuario no encontrado", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ApiException(USUARIO_NO_ENCONTRADO, HttpStatus.NOT_FOUND));
 
         if (!eliminadoPor.getEmpresa().getId().equals(actividad.getProceso().getEmpresa().getId())) {
-            throw new ApiException("El usuario no pertenece a esta empresa", HttpStatus.FORBIDDEN);
+            throw new ApiException(USUARIO_NO_EMPRESA, HttpStatus.FORBIDDEN);
         }
 
         // TODO: verificar permiso DIAGRAMA_EDITAR del usuario en el pool (HU-Auth)
@@ -254,7 +262,7 @@ public class DiagramService {
                 eliminadoPor,
                 "ACTIVIDAD",
                 actividadId,
-                "ELIMINAR",
+                ACCION_ELIMINAR,
                 detalle,
                 null
         );
@@ -287,9 +295,9 @@ public class DiagramService {
         auditService.registrar(
                 gateway.getProceso().getEmpresa(),
                 eliminadoPor,
-                "GATEWAY",
+                TIPO_GATEWAY,
                 gatewayId,
-                "ELIMINAR",
+                ACCION_ELIMINAR,
                 antes,
                 null
         );
@@ -371,7 +379,7 @@ public class DiagramService {
                 editadoPor,
                 "ARCO",
                 arco.getId(),
-                "EDITAR",
+                ACCION_EDITAR,
                 antes,
                 snapshotArco(arco)
         );
@@ -404,7 +412,7 @@ public class DiagramService {
                 eliminadoPor,
                 "ARCO",
                 arco.getId(),
-                "ELIMINAR",
+                ACCION_ELIMINAR,
                 antes,
                 snapshotArco(arco)
         );
@@ -481,9 +489,9 @@ public class DiagramService {
         }
 
         Lane lane = laneRepository.findById(laneId)
-                .orElseThrow(() -> new ApiException("Lane no encontrada", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ApiException(LANE_NO_ENCONTRADA, HttpStatus.NOT_FOUND));
         if (!lane.getProceso().getId().equals(procesoId)) {
-            throw new ApiException("La lane no pertenece a este proceso", HttpStatus.FORBIDDEN);
+            throw new ApiException(LANE_NO_PERTENECE, HttpStatus.FORBIDDEN);
         }
         return lane;
     }
@@ -560,10 +568,10 @@ public class DiagramService {
 
     private com.lulo.users.Usuario requireUsuarioDeEmpresa(Integer usuarioId, Integer empresaId) {
         var usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new ApiException("Usuario no encontrado", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ApiException(USUARIO_NO_ENCONTRADO, HttpStatus.NOT_FOUND));
 
         if (!usuario.getEmpresa().getId().equals(empresaId)) {
-            throw new ApiException("El usuario no pertenece a esta empresa", HttpStatus.FORBIDDEN);
+            throw new ApiException(USUARIO_NO_EMPRESA, HttpStatus.FORBIDDEN);
         }
 
         return usuario;
@@ -597,9 +605,14 @@ public class DiagramService {
     public static NodoResponse toNodoResponse(Nodo nodo) {
         // Determinar tipo vía instanceof: el campo discriminador no se popula
         // en memoria tras un INSERT (insertable=false, updatable=false)
-        String tipo = nodo instanceof Actividad ? "actividad"
-                    : nodo instanceof Gateway   ? "gateway"
-                    : "nodo";
+        String tipo;
+        if (nodo instanceof Actividad) {
+            tipo = "actividad";
+        } else if (nodo instanceof Gateway) {
+            tipo = "gateway";
+        } else {
+            tipo = "nodo";
+        }
 
         NodoResponse.NodoResponseBuilder builder = NodoResponse.builder()
                 .id(nodo.getId())

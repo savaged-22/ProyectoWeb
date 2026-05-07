@@ -21,5 +21,5 @@ import { Process } from '../../shared/models/process.model';
 })
 export class ProcessListPage {
   processes$: Observable<Process[]> = this.api.get<Process[]>('/api/processes');
-  constructor(private api: ApiClient) {}
+  constructor(private readonly api: ApiClient) {}
 }

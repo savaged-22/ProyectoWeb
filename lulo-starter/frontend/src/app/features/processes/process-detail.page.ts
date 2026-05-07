@@ -19,5 +19,5 @@ export class ProcessDetailPage {
     switchMap(pm => this.api.get<Process>(`/api/processes/${pm.get('id')}`))
   );
 
-  constructor(private route: ActivatedRoute, private api: ApiClient) {}
+  constructor(private readonly route: ActivatedRoute, private readonly api: ApiClient) {}
 }
