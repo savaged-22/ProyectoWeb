@@ -5,7 +5,7 @@ CREATE TABLE audit_log (
     empresa_id UUID      NOT NULL REFERENCES empresa(id),
     usuario_id UUID      NOT NULL REFERENCES usuario(id),
     entidad     VARCHAR(100) NOT NULL,
-    entidad_id  INTEGER      NOT NULL,
+    entidad_id  UUID      NOT NULL,
     accion      VARCHAR(30)  NOT NULL,
     diff_json   JSONB,
     created_at  TIMESTAMP    NOT NULL DEFAULT NOW()

@@ -21,7 +21,7 @@ CREATE INDEX idx_rol_pool_pool ON rol_pool(pool_id);
 -- Permisos asignados a cada rol del pool
 CREATE TABLE rol_pool_permiso (
     rol_pool_id UUID NOT NULL REFERENCES rol_pool(id),
-    permiso_id  INTEGER NOT NULL REFERENCES permiso(id),
+    permiso_id  UUID NOT NULL REFERENCES permiso(id),
     PRIMARY KEY (rol_pool_id, permiso_id)
 );
 

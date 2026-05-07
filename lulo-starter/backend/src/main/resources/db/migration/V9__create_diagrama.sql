@@ -16,7 +16,7 @@ CREATE INDEX idx_lane_proceso ON lane(proceso_id);
 CREATE TABLE nodo (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     proceso_id UUID     NOT NULL REFERENCES proceso(id),
-    lane_id    INTEGER     REFERENCES lane(id),
+    lane_id    UUID     REFERENCES lane(id),
     tipo       VARCHAR(30) NOT NULL,
     label      VARCHAR(255),
     pos_x      FLOAT,
@@ -30,7 +30,7 @@ CREATE INDEX idx_nodo_lane    ON nodo(lane_id);
 -- ─── Actividad (tabla hija de Nodo) ──────────────────────────────────────────
 -- tipo_actividad: tarea | subproceso | manual | servicio | script
 CREATE TABLE actividad (
-    nodo_id        INTEGER     PRIMARY KEY REFERENCES nodo(id),
+    nodo_id        UUID     PRIMARY KEY REFERENCES nodo(id),
     tipo_actividad VARCHAR(50),
     props_json     JSONB
 );
@@ -38,7 +38,7 @@ CREATE TABLE actividad (
 -- ─── Gateway (tabla hija de Nodo) ────────────────────────────────────────────
 -- tipo_gateway: exclusivo | paralelo | inclusivo
 CREATE TABLE gateway (
-    nodo_id      INTEGER     PRIMARY KEY REFERENCES nodo(id),
+    nodo_id      UUID     PRIMARY KEY REFERENCES nodo(id),
     tipo_gateway VARCHAR(30) NOT NULL,
     config_json  JSONB
 );
@@ -48,8 +48,8 @@ CREATE TABLE gateway (
 CREATE TABLE arco (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     proceso_id UUID   NOT NULL REFERENCES proceso(id),
-    from_nodo_id   INTEGER   NOT NULL REFERENCES nodo(id),
-    to_nodo_id     INTEGER   NOT NULL REFERENCES nodo(id),
+    from_nodo_id   UUID   NOT NULL REFERENCES nodo(id),
+    to_nodo_id     UUID   NOT NULL REFERENCES nodo(id),
     condicion_expr TEXT,
     props_json     JSONB,
     activo         BOOLEAN   NOT NULL DEFAULT TRUE,
