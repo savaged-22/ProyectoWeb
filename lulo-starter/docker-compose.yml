@@ -26,7 +26,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     env_file:
-      - remote-db.env
+      - .env
     restart: on-failure
     ports:
       - "8081:8080"
@@ -40,9 +40,11 @@ services:
       start_period: 40s
 
   # ── Frontend Angular servido con SSR (Node.js) ────────────────────────────
+  # FRONTEND_PATH puede sobreescribirse desde un .env local si el frontend
+  # no está en la ubicación esperada (sibling de lulo-starter/).
   frontend:
     build:
-      context: ../../proyectoWeb_Front/frontend_final
+      context: ${FRONTEND_PATH:-../../proyectoWeb_Front/frontend_final}
       dockerfile: Dockerfile
     ports:
       - "4201:4000"

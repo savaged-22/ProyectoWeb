@@ -1,5 +1,7 @@
 package com.lulo.messaging;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import com.lulo.messaging.dto.*;
@@ -7,6 +9,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +23,62 @@ import java.util.List;
 public class MensajeController {
 
     private final MensajeService mensajeService;
+    private final MensajeProcesoRepository mensajeRepo;
+    private final SuscripcionMensajeRepository suscripcionRepo;
+    private final EntregaMensajeRepository entregaRepo;
+
+    // ---- Dashboard de monitoring (vista agregada) ----
+
+    @GetMapping("/api/mensajes/dashboard")
+    @Operation(summary = "Dashboard de mensajería",
+               description = "Devuelve listas agregadas (mensajes, suscripciones, entregas) "
+                       + "para alimentar el panel de Monitoring del frontend.")
+    public Map<String, Object> dashboard() {
+        var sortByCreatedDesc = Sort.by(Sort.Direction.DESC, "createdAt");
+        var top20 = PageRequest.of(0, 20, sortByCreatedDesc);
+
+        List<Map<String, Object>> mensajes = mensajeRepo.findAll(top20).stream()
+                .map(m -> {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("id", m.getId());
+                    row.put("nombre_mensaje", m.getNombreMensaje());
+                    row.put("estado", m.getEstado());
+                    row.put("correlation_key", m.getCorrelationKey());
+                    row.put("created_at", m.getCreatedAt());
+                    row.put("payload_size", m.getPayloadJson() != null ? m.getPayloadJson().length() : 0);
+                    return row;
+                })
+                .toList();
+
+        List<Map<String, Object>> suscripciones = suscripcionRepo.findAll(top20).stream()
+                .map(s -> {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("id", s.getId());
+                    row.put("nombre_mensaje", s.getNombreMensaje());
+                    row.put("correlation_key", s.getCorrelationKey());
+                    row.put("is_active", s.isActivo());
+                    row.put("created_at", s.getCreatedAt());
+                    return row;
+                })
+                .toList();
+
+        List<Map<String, Object>> entregas = entregaRepo.findAll(top20).stream()
+                .map(e -> {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("id", e.getId());
+                    row.put("estado", e.getEstado());
+                    row.put("delivered_at", e.getCreatedAt());
+                    row.put("confirmado_at", e.getConfirmadoAt());
+                    return row;
+                })
+                .toList();
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("mensajes", mensajes);
+        response.put("suscripciones", suscripciones);
+        response.put("entregas", entregas);
+        return response;
+    }
 
     // ---- HU-25: Message Throw ----
 

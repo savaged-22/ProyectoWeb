@@ -1,5 +1,10 @@
 package com.lulo.users;
 
+import com.lulo.rbac.UsuarioRolPool;
+import com.lulo.rbac.UsuarioRolPoolRepository;
+import com.lulo.users.dto.LoginRequest;
+import com.lulo.users.dto.LoginResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -13,41 +18,57 @@ import java.util.Optional;
 public class AuthController {
 
     private final UsuarioRepository usuarioRepository;
+    private final UsuarioRolPoolRepository usuarioRolPoolRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public AuthController(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
+    public AuthController(UsuarioRepository usuarioRepository,
+                          UsuarioRolPoolRepository usuarioRolPoolRepository,
+                          PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
+        this.usuarioRolPoolRepository = usuarioRolPoolRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
-        String email = credentials.get("email");
-        String password = credentials.get("password");
-
-        if (email == null || password == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Faltan credenciales"));
-        }
-
-        Optional<Usuario> usuarioOpt = usuarioRepository.findByEmail(email);
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest credentials) {
+        Optional<Usuario> usuarioOpt = usuarioRepository.findByEmail(credentials.getEmail());
 
         if (usuarioOpt.isEmpty()) {
             return ResponseEntity.status(401).body(Map.of("error", "Credenciales inválidas"));
         }
 
         Usuario usuario = usuarioOpt.get();
-        
-        // Verifica la contraseña encriptada usando BCrypt (configurado en SecurityConfig)
-        if (!passwordEncoder.matches(password, usuario.getPasswordHash())) {
+
+        if (!passwordEncoder.matches(credentials.getPassword(), usuario.getPasswordHash())) {
             return ResponseEntity.status(401).body(Map.of("error", "Credenciales inválidas"));
         }
 
-        // TODO: En el futuro esto devolverá un JWT real (HU-Auth)
-        // Por ahora devuelve un token demo para conectar el frontend
-        return ResponseEntity.ok(Map.of(
-            "token", "demo-jwt-token-lulo-12345",
-            "message", "Autenticación exitosa",
-            "email", usuario.getEmail()
-        ));
+        String rol = resolveRol(usuario);
+
+        // TODO: Reemplazar token demo por JWT real cuando se implemente HU-Auth
+        LoginResponse response = LoginResponse.builder()
+                .token("demo-jwt-token-lulo-" + usuario.getId())
+                .message("Autenticación exitosa")
+                .usuarioId(usuario.getId())
+                .empresaId(usuario.getEmpresa().getId())
+                .empresaNombre(usuario.getEmpresa().getNombre())
+                .email(usuario.getEmail())
+                .rol(rol)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Determina el rol funcional del usuario:
+     *  - PROPIETARIO si tiene al menos un rol_pool con esPropietario=true
+     *  - COLABORADOR en cualquier otro caso
+     */
+    private String resolveRol(Usuario usuario) {
+        return usuarioRolPoolRepository.findByIdUsuarioId(usuario.getId()).stream()
+                .map(UsuarioRolPool::getRolPool)
+                .anyMatch(rp -> rp != null && rp.isEsPropietario())
+                ? "PROPIETARIO"
+                : "COLABORADOR";
     }
 }
