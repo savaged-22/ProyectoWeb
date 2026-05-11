@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/procesos/{procesoId}")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 @Tag(name = "Diagrama", description = "Gestión de elementos del diagrama: actividades, gateways, arcos y lanes")
 public class DiagramController {
 
