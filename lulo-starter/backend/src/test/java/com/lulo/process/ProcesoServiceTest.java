@@ -96,7 +96,6 @@ class ProcesoServiceTest {
         when(empresaRepository.findById(EMPRESA_ID)).thenReturn(Optional.of(empresa));
         when(poolRepository.findById(POOL_ID)).thenReturn(Optional.of(pool));
         when(usuarioRepository.findById(USUARIO_ID)).thenReturn(Optional.of(usuario));
-        doNothing().when(poolPermissionService).requirePermisoEnPool(USUARIO_ID, POOL_ID, "PROCESO_CREAR");
         when(procesoRepository.save(any())).thenReturn(procesoGuardado);
 
         ProcesoResponse response = procesoService.crear(request);
@@ -191,7 +190,6 @@ class ProcesoServiceTest {
         when(empresaRepository.findById(EMPRESA_ID)).thenReturn(Optional.of(empresa));
         when(poolRepository.findById(POOL_ID)).thenReturn(Optional.of(pool));
         when(usuarioRepository.findById(USUARIO_ID)).thenReturn(Optional.of(usuario));
-        doNothing().when(poolPermissionService).requirePermisoEnPool(any(), any(), any());
         when(procesoRepository.save(any())).thenReturn(guardado);
 
         ProcesoResponse response = procesoService.crear(request);
