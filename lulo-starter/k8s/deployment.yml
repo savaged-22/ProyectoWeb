@@ -5,6 +5,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: proyectoweb-backend
+  namespace: grupo12
   labels:
     app: proyectoweb-backend
 spec:
@@ -17,6 +18,8 @@ spec:
       labels:
         app: proyectoweb-backend
     spec:
+      imagePullSecrets:
+        - name: ghcr-secret
       containers:
         - name: proyectoweb-backend
           image: __BACKEND_IMAGE__
@@ -55,6 +58,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: proyectoweb-backend-service
+  namespace: grupo12
   labels:
     app: proyectoweb-backend
 spec:
@@ -68,83 +72,20 @@ spec:
 
 ---
 # ─────────────────────────────────────────────────────────────────
-# Frontend
-# ─────────────────────────────────────────────────────────────────
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: proyectoweb-frontend
-  labels:
-    app: proyectoweb-frontend
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: proyectoweb-frontend
-  template:
-    metadata:
-      labels:
-        app: proyectoweb-frontend
-    spec:
-      containers:
-        - name: proyectoweb-frontend
-          image: __FRONTEND_IMAGE__
-          imagePullPolicy: Always
-          ports:
-            - containerPort: 80
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 80
-            initialDelaySeconds: 10
-            periodSeconds: 10
-            timeoutSeconds: 3
-            failureThreshold: 3
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 80
-            initialDelaySeconds: 20
-            periodSeconds: 20
-            timeoutSeconds: 3
-            failureThreshold: 3
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "128Mi"
-            limits:
-              cpu: "500m"
-              memory: "512Mi"
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: proyectoweb-frontend-service
-  labels:
-    app: proyectoweb-frontend
-spec:
-  selector:
-    app: proyectoweb-frontend
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 80
-  type: ClusterIP
-
----
-# ─────────────────────────────────────────────────────────────────
-# Ingress: expone frontend en / y backend en /api
+# Ingress: expone backend en /api
 # ─────────────────────────────────────────────────────────────────
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: proyectoweb-ingress
+  name: proyectoweb-backend-ingress
+  namespace: grupo12
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
+  ingressClassName: public
   rules:
-    - http:
+    - host: grupo12.inphotech.co
+      http:
         paths:
           - path: /api
             pathType: Prefix
@@ -153,10 +94,3 @@ spec:
                 name: proyectoweb-backend-service
                 port:
                   number: 8080
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: proyectoweb-frontend-service
-                port:
-                  number: 80

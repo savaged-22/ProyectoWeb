@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/procesos")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 @Tag(name = "Procesos", description = "Gestión de procesos organizacionales")
 public class ProcesoController {
 

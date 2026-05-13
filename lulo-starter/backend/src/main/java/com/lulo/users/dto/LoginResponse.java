@@ -17,4 +17,5 @@ public class LoginResponse {
     private String email;
     /** PROPIETARIO | COLABORADOR */
     private String rol;
+    private UUID poolId;
 }

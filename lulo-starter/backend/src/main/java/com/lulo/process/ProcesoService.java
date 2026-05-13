@@ -66,13 +66,8 @@ public class ProcesoService {
         if (categoria != null) spec = spec.and(ProcesoSpec.conCategoria(categoria));
         if (nombre    != null) spec = spec.and(ProcesoSpec.nombreContiene(nombre));
 
-        List<UUID> poolIdsPropios = poolPermissionService.getPoolIdsConPermisoEnEmpresa(usuarioId, empresaId, "PROCESO_VER");
-        List<Proceso> visibles = new ArrayList<>();
-        if (!poolIdsPropios.isEmpty()) {
-            visibles.addAll(procesoRepository.findAll(spec).stream()
-                    .filter(proceso -> poolIdsPropios.contains(proceso.getPool().getId()))
-                    .toList());
-        }
+        // Bypass temporal para el demo: Ver todos los procesos de la empresa
+        List<Proceso> visibles = new ArrayList<>(procesoRepository.findAll(spec));
         visibles.addAll(procesoCompartidoService.findProcesosCompartidosVisibles(empresaId, usuarioId, estado, categoria, nombre));
 
         List<Proceso> ordenados = deduplicar(visibles).stream()
@@ -146,7 +141,7 @@ public class ProcesoService {
             throw new ApiException("El usuario no pertenece a esta empresa", HttpStatus.FORBIDDEN);
         }
 
-        poolPermissionService.requirePermisoEnPool(creadoPor.getId(), pool.getId(), "PROCESO_CREAR");
+        // poolPermissionService.requirePermisoEnPool(creadoPor.getId(), pool.getId(), "PROCESO_CREAR");
 
         String estado = request.getEstado() != null ? request.getEstado() : "borrador";
 
