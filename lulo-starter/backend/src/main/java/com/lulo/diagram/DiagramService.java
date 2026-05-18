@@ -449,6 +449,60 @@ public class DiagramService {
                 .toList();
     }
 
+    @Transactional
+    public void clonarDiagrama(UUID sourceProcesoId, UUID targetProcesoId, Usuario clonadoPor) {
+        Proceso targetProceso = procesoRepository.findById(targetProcesoId)
+                .orElseThrow(() -> new ApiException("Proceso destino no encontrado", HttpStatus.NOT_FOUND));
+
+        Map<UUID, Lane> laneMap = new java.util.HashMap<>();
+        for (Lane l : laneRepository.findByProcesoIdOrderByOrdenAsc(sourceProcesoId)) {
+            Lane copy = new Lane();
+            copy.setProceso(targetProceso);
+            copy.setRolProceso(l.getRolProceso());
+            copy.setNombre(l.getNombre());
+            copy.setOrden(l.getOrden());
+            copy = laneRepository.save(copy);
+            laneMap.put(l.getId(), copy);
+        }
+
+        Map<UUID, Nodo> nodoMap = new java.util.HashMap<>();
+        for (Nodo n : nodoRepository.findByProcesoId(sourceProcesoId)) {
+            if (n instanceof Actividad a) {
+                Actividad copy = new Actividad();
+                copy.setProceso(targetProceso);
+                copy.setLane(a.getLane() != null ? laneMap.get(a.getLane().getId()) : null);
+                copy.setLabel(a.getLabel());
+                copy.setPosX(a.getPosX());
+                copy.setPosY(a.getPosY());
+                copy.setTipoActividad(a.getTipoActividad());
+                copy.setPropsJson(a.getPropsJson());
+                copy = actividadRepository.save(copy);
+                nodoMap.put(a.getId(), copy);
+            } else if (n instanceof Gateway g) {
+                Gateway copy = new Gateway();
+                copy.setProceso(targetProceso);
+                copy.setLane(g.getLane() != null ? laneMap.get(g.getLane().getId()) : null);
+                copy.setLabel(g.getLabel());
+                copy.setPosX(g.getPosX());
+                copy.setPosY(g.getPosY());
+                copy.setTipoGateway(g.getTipoGateway());
+                copy.setConfigJson(g.getConfigJson());
+                copy = gatewayRepository.save(copy);
+                nodoMap.put(g.getId(), copy);
+            }
+        }
+
+        for (Arco a : arcoRepository.findByProcesoIdAndActivoTrue(sourceProcesoId)) {
+            Arco copy = new Arco();
+            copy.setProceso(targetProceso);
+            copy.setFromNodo(nodoMap.get(a.getFromNodo().getId()));
+            copy.setToNodo(nodoMap.get(a.getToNodo().getId()));
+            copy.setCondicionExpr(a.getCondicionExpr());
+            copy.setPropsJson(a.getPropsJson());
+            arcoRepository.save(copy);
+        }
+    }
+
     private Map<String, Object> snapshotActividad(Actividad actividad) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("label", actividad.getLabel());

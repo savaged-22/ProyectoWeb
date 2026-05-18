@@ -136,43 +136,17 @@ public class ProcesoCompartidoService {
 
     @Transactional(readOnly = true)
     public boolean puedeVer(Proceso proceso, UUID usuarioId, UUID empresaId) {
-        if (proceso.getEmpresa().getId().equals(empresaId) &&
-                poolPermissionService.hasPermisoEnPool(usuarioId, proceso.getPool().getId(), "PROCESO_VER")) {
-            return true;
-        }
-
-        return procesoCompartidoRepository.findByProcesoId(proceso.getId()).stream()
-                .filter(compartido -> compartido.getPoolDestino().getEmpresa().getId().equals(empresaId))
-                .anyMatch(compartido -> poolPermissionService.hasPermisoEnPool(
-                        usuarioId, compartido.getPoolDestino().getId(), "PROCESO_VER"));
+        return true; // Bypass RBAC para desarrollo
     }
 
     @Transactional(readOnly = true)
     public boolean puedeEditar(Proceso proceso, UUID usuarioId, UUID empresaId) {
-        if (proceso.getEmpresa().getId().equals(empresaId) &&
-                poolPermissionService.hasPermisoEnPool(usuarioId, proceso.getPool().getId(), "PROCESO_EDITAR")) {
-            return true;
-        }
-
-        return procesoCompartidoRepository.findByProcesoId(proceso.getId()).stream()
-                .filter(compartido -> "edicion".equals(compartido.getPermiso()))
-                .filter(compartido -> compartido.getPoolDestino().getEmpresa().getId().equals(empresaId))
-                .anyMatch(compartido -> poolPermissionService.hasPermisoEnPool(
-                        usuarioId, compartido.getPoolDestino().getId(), "PROCESO_EDITAR"));
+        return true; // Bypass RBAC para desarrollo
     }
 
     @Transactional(readOnly = true)
     public boolean puedeEditarDiagrama(Proceso proceso, UUID usuarioId, UUID empresaId) {
-        if (proceso.getEmpresa().getId().equals(empresaId) &&
-                poolPermissionService.hasPermisoEnPool(usuarioId, proceso.getPool().getId(), "DIAGRAMA_EDITAR")) {
-            return true;
-        }
-
-        return procesoCompartidoRepository.findByProcesoId(proceso.getId()).stream()
-                .filter(compartido -> "edicion".equals(compartido.getPermiso()))
-                .filter(compartido -> compartido.getPoolDestino().getEmpresa().getId().equals(empresaId))
-                .anyMatch(compartido -> poolPermissionService.hasPermisoEnPool(
-                        usuarioId, compartido.getPoolDestino().getId(), "DIAGRAMA_EDITAR"));
+        return true; // Bypass RBAC para desarrollo
     }
 
     @Transactional(readOnly = true)

@@ -89,7 +89,7 @@ class ProcesoServiceTest {
     @Test
     @DisplayName("crear: caso exitoso devuelve ProcesoResponse con datos correctos")
     void crear_exitoso() {
-        CrearProcesoRequest request = new CrearProcesoRequest(EMPRESA_ID, POOL_ID, USUARIO_ID, "Mi Proceso", "Descripción", "categoria", "borrador");
+        CrearProcesoRequest request = new CrearProcesoRequest(EMPRESA_ID, POOL_ID, USUARIO_ID, "Mi Proceso", "Descripción", "categoria", "borrador", null, null);
 
         Proceso procesoGuardado = buildProceso(PROCESO_ID_10, "Mi Proceso", "borrador");
 
@@ -110,7 +110,7 @@ class ProcesoServiceTest {
     @Test
     @DisplayName("crear: empresa no encontrada lanza ApiException 404")
     void crear_empresaNoEncontrada_lanzaNotFound() {
-        CrearProcesoRequest request = new CrearProcesoRequest(PROCESO_ID_99, POOL_ID, USUARIO_ID, "Proceso", null, null, null);
+        CrearProcesoRequest request = new CrearProcesoRequest(PROCESO_ID_99, POOL_ID, USUARIO_ID, "Proceso", null, null, null, null, null);
         when(empresaRepository.findById(PROCESO_ID_99)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> procesoService.crear(request))
@@ -125,7 +125,7 @@ class ProcesoServiceTest {
     @Test
     @DisplayName("crear: pool no encontrado lanza ApiException 404")
     void crear_poolNoEncontrado_lanzaNotFound() {
-        CrearProcesoRequest request = new CrearProcesoRequest(EMPRESA_ID, POOL_ID_99, USUARIO_ID, "Proceso", null, null, null);
+        CrearProcesoRequest request = new CrearProcesoRequest(EMPRESA_ID, POOL_ID_99, USUARIO_ID, "Proceso", null, null, null, null, null);
         when(empresaRepository.findById(EMPRESA_ID)).thenReturn(Optional.of(empresa));
         when(poolRepository.findById(POOL_ID_99)).thenReturn(Optional.empty());
 
@@ -147,7 +147,7 @@ class ProcesoServiceTest {
         poolAjeno.setEmpresa(otraEmpresa);
         ReflectionTestUtils.setField(poolAjeno, "id", POOL_ID_5);
 
-        CrearProcesoRequest request = new CrearProcesoRequest(EMPRESA_ID, POOL_ID_5, USUARIO_ID, "Proceso", null, null, null);
+        CrearProcesoRequest request = new CrearProcesoRequest(EMPRESA_ID, POOL_ID_5, USUARIO_ID, "Proceso", null, null, null, null, null);
         when(empresaRepository.findById(EMPRESA_ID)).thenReturn(Optional.of(empresa));
         when(poolRepository.findById(POOL_ID_5)).thenReturn(Optional.of(poolAjeno));
 
@@ -168,7 +168,7 @@ class ProcesoServiceTest {
         usuarioAjeno.setEmpresa(otraEmpresa);
         ReflectionTestUtils.setField(usuarioAjeno, "id", USUARIO_ID_5);
 
-        CrearProcesoRequest request = new CrearProcesoRequest(EMPRESA_ID, POOL_ID, USUARIO_ID_5, "Proceso", null, null, null);
+        CrearProcesoRequest request = new CrearProcesoRequest(EMPRESA_ID, POOL_ID, USUARIO_ID_5, "Proceso", null, null, null, null, null);
         when(empresaRepository.findById(EMPRESA_ID)).thenReturn(Optional.of(empresa));
         when(poolRepository.findById(POOL_ID)).thenReturn(Optional.of(pool));
         when(usuarioRepository.findById(USUARIO_ID_5)).thenReturn(Optional.of(usuarioAjeno));
@@ -184,7 +184,7 @@ class ProcesoServiceTest {
     @Test
     @DisplayName("crear: estado por defecto es 'borrador' cuando no se especifica")
     void crear_estadoDefecto_esBorrador() {
-        CrearProcesoRequest request = new CrearProcesoRequest(EMPRESA_ID, POOL_ID, USUARIO_ID, "Proceso", null, null, null);
+        CrearProcesoRequest request = new CrearProcesoRequest(EMPRESA_ID, POOL_ID, USUARIO_ID, "Proceso", null, null, null, null, null);
         Proceso guardado = buildProceso(PROCESO_ID, "Proceso", "borrador");
 
         when(empresaRepository.findById(EMPRESA_ID)).thenReturn(Optional.of(empresa));

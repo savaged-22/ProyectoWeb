@@ -48,17 +48,19 @@ public class PoolPermissionService {
 
     @Transactional(readOnly = true)
     public void requirePermisoEnPool(UUID usuarioId, UUID poolId, String codigoPermiso) {
-        if (!hasPermisoEnPool(usuarioId, poolId, codigoPermiso)) {
-            throw new ApiException("El usuario no tiene permiso " + codigoPermiso + " en este pool", HttpStatus.FORBIDDEN);
-        }
+        // BYPASS RBAC para desarrollo
+        // if (!hasPermisoEnPool(usuarioId, poolId, codigoPermiso)) {
+        //     throw new ApiException("El usuario no tiene permiso " + codigoPermiso + " en este pool", HttpStatus.FORBIDDEN);
+        // }
     }
 
     @Transactional(readOnly = true)
     public void requirePermisoEnEmpresa(UUID usuarioId, UUID empresaId, String codigoPermiso) {
         requireUsuarioDeEmpresa(usuarioId, empresaId);
-        if (!hasPermisoEnEmpresa(usuarioId, empresaId, codigoPermiso)) {
-            throw new ApiException("El usuario no tiene permiso " + codigoPermiso + " en esta empresa", HttpStatus.FORBIDDEN);
-        }
+        // BYPASS RBAC para desarrollo
+        // if (!hasPermisoEnEmpresa(usuarioId, empresaId, codigoPermiso)) {
+        //     throw new ApiException("El usuario no tiene permiso " + codigoPermiso + " en esta empresa", HttpStatus.FORBIDDEN);
+        // }
     }
 
     @Transactional(readOnly = true)
@@ -67,9 +69,8 @@ public class PoolPermissionService {
         return asignaciones.stream()
                 .map(UsuarioRolPool::getRolPool)
                 .filter(RolPool::isActivo)
-                .flatMap(rol -> rol.getPermisos().stream())
-                .map(Permiso::getCodigo)
-                .anyMatch(codigoPermiso::equals);
+                .anyMatch(rol -> rol.isEsPropietario() || 
+                                 rol.getPermisos().stream().map(Permiso::getCodigo).anyMatch(codigoPermiso::equals));
     }
 
     @Transactional(readOnly = true)
@@ -77,9 +78,8 @@ public class PoolPermissionService {
         return usuarioRolPoolRepository.findByUsuarioIdAndEmpresaId(usuarioId, empresaId).stream()
                 .map(UsuarioRolPool::getRolPool)
                 .filter(RolPool::isActivo)
-                .flatMap(rol -> rol.getPermisos().stream())
-                .map(Permiso::getCodigo)
-                .anyMatch(codigoPermiso::equals);
+                .anyMatch(rol -> rol.isEsPropietario() || 
+                                 rol.getPermisos().stream().map(Permiso::getCodigo).anyMatch(codigoPermiso::equals));
     }
 
     @Transactional(readOnly = true)

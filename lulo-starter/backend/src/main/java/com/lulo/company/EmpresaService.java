@@ -108,4 +108,10 @@ public class EmpresaService {
                 .mensaje("Empresa registrada exitosamente")
                 .build();
     }
+
+    @Transactional(readOnly = true)
+    public Empresa obtener(java.util.UUID id) {
+        return empresaRepository.findById(id)
+                .orElseThrow(() -> new ApiException("Empresa no encontrada", HttpStatus.NOT_FOUND));
+    }
 }
