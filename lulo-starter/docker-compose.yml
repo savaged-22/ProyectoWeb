@@ -39,7 +39,7 @@ services:
       retries: 6
       start_period: 40s
 
-  # ── Frontend Angular servido con SSR (Node.js) ────────────────────────────
+  # ── Frontend Angular servido con Nginx ────────────────────────────────────
   # FRONTEND_PATH puede sobreescribirse desde un .env local si el frontend
   # no está en la ubicación esperada (sibling de lulo-starter/).
   frontend:
@@ -47,7 +47,7 @@ services:
       context: ${FRONTEND_PATH:-../../proyectoWeb_Front/frontend_final}
       dockerfile: Dockerfile
     ports:
-      - "4201:4000"
+      - "4201:80"
     depends_on:
       - backend
     networks:
