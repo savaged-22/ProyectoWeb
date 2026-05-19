@@ -1,5 +1,6 @@
 package com.lulo.company;
 
+import com.lulo.company.dto.EmpresaDetalleResponse;
 import com.lulo.company.dto.RegistroEmpresaRequest;
 import com.lulo.company.dto.RegistroEmpresaResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,8 +26,8 @@ public class EmpresaController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Obtener empresa", description = "Retorna los datos de una empresa")
-    public Empresa obtener(@PathVariable java.util.UUID id) {
+    @Operation(summary = "Obtener empresa", description = "Retorna los datos de una empresa con su lista de usuarios")
+    public EmpresaDetalleResponse obtener(@PathVariable java.util.UUID id) {
         return empresaService.obtener(id);
     }
 }
