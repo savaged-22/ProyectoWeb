@@ -1,6 +1,7 @@
 package com.lulo.company;
 
 import com.lulo.company.dto.EmpresaDetalleResponse;
+import com.lulo.company.dto.EmpresaListItemResponse;
 import com.lulo.company.dto.RegistroEmpresaRequest;
 import com.lulo.company.dto.RegistroEmpresaResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/empresas")
 @RequiredArgsConstructor
@@ -17,6 +20,12 @@ import org.springframework.web.bind.annotation.*;
 public class EmpresaController {
 
     private final EmpresaService empresaService;
+
+    @GetMapping
+    @Operation(summary = "Listar empresas", description = "Retorna todas las empresas con sus conteos")
+    public List<EmpresaListItemResponse> listar() {
+        return empresaService.listar();
+    }
 
     @PostMapping("/registro")
     @ResponseStatus(HttpStatus.CREATED)

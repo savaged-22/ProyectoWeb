@@ -1,6 +1,7 @@
 package com.lulo.company;
 
 import com.lulo.company.dto.EmpresaDetalleResponse;
+import com.lulo.company.dto.EmpresaListItemResponse;
 import com.lulo.company.dto.RegistroEmpresaRequest;
 import com.lulo.company.dto.RegistroEmpresaResponse;
 import com.lulo.company.dto.UsuarioBasicoResponse;
@@ -111,6 +112,24 @@ public class EmpresaService {
                 .poolDefault(pool.getNombre())
                 .mensaje("Empresa registrada exitosamente")
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public List<EmpresaListItemResponse> listar() {
+        return empresaRepository.findAll().stream().map(empresa -> {
+            long totalUsuarios = usuarioRepository.findByEmpresaId(empresa.getId()).size();
+            long totalPools = poolRepository.findByEmpresaIdOrderByNombreAsc(empresa.getId()).size();
+            return EmpresaListItemResponse.builder()
+                    .id(empresa.getId())
+                    .nombre(empresa.getNombre())
+                    .nit(empresa.getNit())
+                    .emailContacto(empresa.getEmailContacto())
+                    .createdAt(empresa.getCreatedAt())
+                    .totalUsuarios(totalUsuarios)
+                    .totalProcesos(0L)
+                    .totalPools(totalPools)
+                    .build();
+        }).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
