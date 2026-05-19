@@ -109,6 +109,7 @@ public class ProcesoService {
                 .categoria(proceso.getCategoria())
                 .estado(proceso.getEstado())
                 .activo(proceso.isActivo())
+                .esPlantilla(proceso.isEsPlantilla())
                 .createdAt(proceso.getCreatedAt())
                 .updatedAt(proceso.getUpdatedAt())
                 .lanes(diagramService.getLanes(procesoId))
@@ -154,7 +155,12 @@ public class ProcesoService {
         proceso.setCategoria(request.getCategoria());
         proceso.setEstado(estado);
         proceso.setActivo(true);
+        proceso.setEsPlantilla(Boolean.TRUE.equals(request.getEsPlantilla()));
         proceso = procesoRepository.save(proceso);
+
+        if (request.getDisenoBaseId() != null) {
+            diagramService.clonarDiagrama(request.getDisenoBaseId(), proceso.getId(), creadoPor);
+        }
 
         return toResponse(proceso);
     }
@@ -293,6 +299,7 @@ public class ProcesoService {
                 .categoria(p.getCategoria())
                 .estado(p.getEstado())
                 .activo(p.isActivo())
+                .esPlantilla(p.isEsPlantilla())
                 .createdAt(p.getCreatedAt())
                 .updatedAt(p.getUpdatedAt())
                 .build();

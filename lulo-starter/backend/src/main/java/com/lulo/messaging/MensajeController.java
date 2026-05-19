@@ -20,6 +20,15 @@ public class MensajeController {
 
     private final MensajeService mensajeService;
 
+    // ---- Dashboard de monitoreo ----
+
+    @GetMapping("/api/mensajes/dashboard")
+    @Operation(summary = "Dashboard de monitoreo de mensajería",
+               description = "Retorna todos los mensajes, suscripciones y entregas para el panel de monitoreo.")
+    public DashboardResponse dashboard() {
+        return mensajeService.dashboard();
+    }
+
     // ---- HU-25: Message Throw ----
 
     @PostMapping("/api/mensajes")

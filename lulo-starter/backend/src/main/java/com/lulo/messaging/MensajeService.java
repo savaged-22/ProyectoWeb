@@ -35,6 +35,36 @@ public class MensajeService {
     private final AuditService auditService;
 
     // ------------------------------------------------------------------
+    // Dashboard de monitoreo
+    // ------------------------------------------------------------------
+
+    @Transactional(readOnly = true)
+    public DashboardResponse dashboard() {
+        var mensajes = mensajeRepository.findAll().stream()
+                .map(m -> new DashboardResponse.MensajeItem(
+                        m.getNombreMensaje(),
+                        m.getEstado(),
+                        m.getCorrelationKey(),
+                        m.getCreatedAt(),
+                        m.getPayloadJson() != null ? m.getPayloadJson().length() : 0))
+                .toList();
+
+        var suscripciones = suscripcionRepository.findAll().stream()
+                .map(s -> new DashboardResponse.SuscripcionItem(
+                        s.getNombreMensaje(),
+                        s.isActivo()))
+                .toList();
+
+        var entregas = entregaRepository.findAll().stream()
+                .map(e -> new DashboardResponse.EntregaItem(
+                        e.getEstado(),
+                        e.getConfirmadoAt()))
+                .toList();
+
+        return new DashboardResponse(mensajes, suscripciones, entregas);
+    }
+
+    // ------------------------------------------------------------------
     // HU-25: Message Throw — enviar mensaje
     // ------------------------------------------------------------------
 

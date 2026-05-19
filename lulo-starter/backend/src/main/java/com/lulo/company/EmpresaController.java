@@ -23,4 +23,10 @@ public class EmpresaController {
     public RegistroEmpresaResponse registrar(@Valid @RequestBody RegistroEmpresaRequest request) {
         return empresaService.registrar(request);
     }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Obtener empresa", description = "Retorna los datos de una empresa")
+    public Empresa obtener(@PathVariable java.util.UUID id) {
+        return empresaService.obtener(id);
+    }
 }

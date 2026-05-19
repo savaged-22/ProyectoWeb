@@ -40,6 +40,8 @@ public class EmpresaService {
     private RolPoolRepository        rolPoolRepository;
     @Autowired
     private UsuarioRolPoolRepository usuarioRolPoolRepository;
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @Transactional
     public RegistroEmpresaResponse registrar(RegistroEmpresaRequest request) {
@@ -68,8 +70,7 @@ public class EmpresaService {
         Usuario admin = new Usuario();
         admin.setEmpresa(empresa);
         admin.setEmail(request.getEmailAdmin());
-        // TODO: reemplazar por BCrypt cuando se implemente la capa de seguridad (HU-Auth)
-        admin.setPasswordHash(request.getPassword());
+        admin.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         admin.setEstado("activo");
         admin = usuarioRepository.save(admin);
 
@@ -107,5 +108,11 @@ public class EmpresaService {
                 .poolDefault(pool.getNombre())
                 .mensaje("Empresa registrada exitosamente")
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public Empresa obtener(java.util.UUID id) {
+        return empresaRepository.findById(id)
+                .orElseThrow(() -> new ApiException("Empresa no encontrada", HttpStatus.NOT_FOUND));
     }
 }
