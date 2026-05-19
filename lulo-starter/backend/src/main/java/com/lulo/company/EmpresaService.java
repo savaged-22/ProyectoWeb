@@ -1,6 +1,7 @@
 package com.lulo.company;
 
 import com.lulo.company.dto.EmpresaDetalleResponse;
+import com.lulo.company.dto.EmpresaListItemResponse;
 import com.lulo.company.dto.RegistroEmpresaRequest;
 import com.lulo.company.dto.RegistroEmpresaResponse;
 import com.lulo.company.dto.UsuarioBasicoResponse;
@@ -45,6 +46,22 @@ public class EmpresaService {
     private UsuarioRolPoolRepository usuarioRolPoolRepository;
     @Autowired
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
+    @Transactional(readOnly = true)
+    public List<EmpresaListItemResponse> listar() {
+        return empresaRepository.findAll().stream()
+                .map(empresa -> EmpresaListItemResponse.builder()
+                        .id(empresa.getId())
+                        .nombre(empresa.getNombre())
+                        .nit(empresa.getNit())
+                        .emailContacto(empresa.getEmailContacto())
+                        .createdAt(empresa.getCreatedAt())
+                        .totalUsuarios(usuarioRepository.findByEmpresaId(empresa.getId()).size())
+                        .totalProcesos(0L)
+                        .totalPools(poolRepository.findByEmpresaIdOrderByNombreAsc(empresa.getId()).size())
+                        .build())
+                .toList();
+    }
 
     @Transactional
     public RegistroEmpresaResponse registrar(RegistroEmpresaRequest request) {

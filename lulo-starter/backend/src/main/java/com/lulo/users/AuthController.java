@@ -2,6 +2,7 @@ package com.lulo.users;
 
 import com.lulo.pool.Pool;
 import com.lulo.pool.PoolRepository;
+import com.lulo.rbac.UsuarioRolPoolRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -19,13 +20,16 @@ public class AuthController {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final PoolRepository poolRepository;
+    private final UsuarioRolPoolRepository usuarioRolPoolRepository;
 
     public AuthController(UsuarioRepository usuarioRepository,
                           PasswordEncoder passwordEncoder,
-                          PoolRepository poolRepository) {
+                          PoolRepository poolRepository,
+                          UsuarioRolPoolRepository usuarioRolPoolRepository) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.poolRepository = poolRepository;
+        this.usuarioRolPoolRepository = usuarioRolPoolRepository;
     }
 
     @PostMapping("/login")
@@ -63,13 +67,20 @@ public class AuthController {
             targetPool = pools.get(0);
         }
 
+        boolean esPropietario = usuarioRolPoolRepository
+                .findByIdUsuarioId(usuario.getId())
+                .stream()
+                .anyMatch(urp -> urp.getRolPool().isEsPropietario());
+
         HashMap<String, Object> response = new HashMap<>();
         response.put("token", "demo-jwt-token-lulo-12345");
         response.put("message", "Autenticación exitosa");
         response.put("email", usuario.getEmail());
         response.put("usuarioId", usuario.getId().toString());
         response.put("empresaId", usuario.getEmpresa().getId().toString());
+        response.put("empresaNombre", usuario.getEmpresa().getNombre());
         response.put("poolId", targetPool.getId().toString());
+        response.put("rol", esPropietario ? "PROPIETARIO" : "COLABORADOR");
 
         return ResponseEntity.ok(response);
     }
