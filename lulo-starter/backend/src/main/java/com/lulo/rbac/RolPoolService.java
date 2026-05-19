@@ -170,7 +170,11 @@ public class RolPoolService {
         }
 
         Map<String, Object> antes = snapshot(rolPool);
-        rolPool.setPermisos(resolvePermisos(request.getCodigosPermiso()));
+        // Mutar la colección gestionada por JPA en vez de reemplazar la
+        // referencia: resolvePermisos() devuelve un Set inmutable y asignarlo
+        // directo provoca UnsupportedOperationException al hacer flush.
+        rolPool.getPermisos().clear();
+        rolPool.getPermisos().addAll(resolvePermisos(request.getCodigosPermiso()));
         rolPool = rolPoolRepository.save(rolPool);
 
         auditService.registrar(
