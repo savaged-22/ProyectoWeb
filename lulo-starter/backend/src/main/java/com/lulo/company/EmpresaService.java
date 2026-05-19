@@ -1,7 +1,9 @@
 package com.lulo.company;
 
+import com.lulo.company.dto.EmpresaDetalleResponse;
 import com.lulo.company.dto.RegistroEmpresaRequest;
 import com.lulo.company.dto.RegistroEmpresaResponse;
+import com.lulo.company.dto.UsuarioBasicoResponse;
 import com.lulo.common.exception.ApiException;
 import com.lulo.pool.Pool;
 import com.lulo.pool.PoolRepository;
@@ -21,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class EmpresaService {
@@ -111,8 +114,43 @@ public class EmpresaService {
     }
 
     @Transactional(readOnly = true)
-    public Empresa obtener(java.util.UUID id) {
-        return empresaRepository.findById(id)
+    public EmpresaDetalleResponse obtener(java.util.UUID id) {
+        Empresa empresa = empresaRepository.findById(id)
                 .orElseThrow(() -> new ApiException("Empresa no encontrada", HttpStatus.NOT_FOUND));
+
+        List<Usuario> usuarios = usuarioRepository.findByEmpresaId(id);
+
+        List<UsuarioBasicoResponse> usuariosDto = usuarios.stream().map(u -> {
+            List<UsuarioRolPool> roles = usuarioRolPoolRepository.findByUsuarioIdAndEmpresaId(u.getId(), id);
+            String rolPrincipal = roles.stream()
+                    .map(urp -> urp.getRolPool().getNombre())
+                    .findFirst()
+                    .orElse("Sin rol");
+            return UsuarioBasicoResponse.builder()
+                    .id(u.getId())
+                    .email(u.getEmail())
+                    .estado(u.getEstado())
+                    .rolPrincipal(rolPrincipal)
+                    .createdAt(u.getCreatedAt())
+                    .build();
+        }).collect(Collectors.toList());
+
+        long totalPools = poolRepository.findByEmpresaIdOrderByNombreAsc(id).size();
+        long totalRoles = poolRepository.findByEmpresaIdOrderByNombreAsc(id).stream()
+                .mapToLong(p -> rolPoolRepository.findByPoolId(p.getId()).size())
+                .sum();
+
+        return EmpresaDetalleResponse.builder()
+                .id(empresa.getId())
+                .nombre(empresa.getNombre())
+                .nit(empresa.getNit())
+                .emailContacto(empresa.getEmailContacto())
+                .createdAt(empresa.getCreatedAt())
+                .totalUsuarios(usuariosDto.size())
+                .totalProcesos(0L)
+                .totalPools(totalPools)
+                .totalRolesPool(totalRoles)
+                .usuarios(usuariosDto)
+                .build();
     }
 }
