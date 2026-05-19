@@ -13,6 +13,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Set;
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class UsuarioService {
@@ -61,6 +64,62 @@ public class UsuarioService {
                 .rolAsignado(rolPool.getNombre())
                 .empresaNombre(empresa.getNombre())
                 .mensaje("Usuario creado exitosamente")
+                .build();
+    }
+
+    private static final Set<String> ESTADOS_VALIDOS =
+            Set.of("activo", "suspendido", "inactivo", "pendiente");
+
+    /**
+     * Edita un usuario: cambia su estado y/o reemplaza su rol.
+     * Reemplazar el rol elimina todas las asignaciones previas del usuario
+     * y deja únicamente la indicada (modelo de un rol por usuario).
+     */
+    @Transactional
+    public ActualizarUsuarioResponse actualizar(UUID usuarioId, ActualizarUsuarioRequest request) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ApiException("Usuario no encontrado", HttpStatus.NOT_FOUND));
+
+        if (request.getEstado() != null && !request.getEstado().isBlank()) {
+            String estado = request.getEstado().trim().toLowerCase();
+            if (!ESTADOS_VALIDOS.contains(estado)) {
+                throw new ApiException("Estado inválido: " + request.getEstado(), HttpStatus.BAD_REQUEST);
+            }
+            usuario.setEstado(estado);
+        }
+
+        String rolAsignado = null;
+        if (request.getRolPoolId() != null) {
+            RolPool rolPool = rolPoolRepository.findById(request.getRolPoolId())
+                    .orElseThrow(() -> new ApiException("Rol no encontrado", HttpStatus.NOT_FOUND));
+            if (!rolPool.getPool().getEmpresa().getId().equals(usuario.getEmpresa().getId())) {
+                throw new ApiException("El rol no pertenece a la empresa del usuario", HttpStatus.FORBIDDEN);
+            }
+            // Reemplaza el rol: borra las asignaciones previas y deja solo la nueva.
+            usuarioRolPoolRepository.deleteAll(usuarioRolPoolRepository.findByIdUsuarioId(usuarioId));
+            usuarioRolPoolRepository.flush();
+            UsuarioRolPool asignacion = new UsuarioRolPool();
+            asignacion.setId(new UsuarioRolPoolId(usuario.getId(), rolPool.getId()));
+            asignacion.setUsuario(usuario);
+            asignacion.setRolPool(rolPool);
+            usuarioRolPoolRepository.save(asignacion);
+            rolAsignado = rolPool.getNombre();
+        }
+
+        usuario = usuarioRepository.save(usuario);
+
+        if (rolAsignado == null) {
+            rolAsignado = usuarioRolPoolRepository.findByIdUsuarioId(usuarioId).stream()
+                    .map(urp -> urp.getRolPool().getNombre())
+                    .findFirst()
+                    .orElse("Sin rol");
+        }
+
+        return ActualizarUsuarioResponse.builder()
+                .usuarioId(usuario.getId())
+                .email(usuario.getEmail())
+                .estado(usuario.getEstado())
+                .rolAsignado(rolAsignado)
                 .build();
     }
 }

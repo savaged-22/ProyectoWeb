@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/users")
@@ -34,5 +35,12 @@ public class UsuarioController {
     public ResponseEntity<CrearUsuarioDirectoResponse> crearUsuario(
             @RequestBody CrearUsuarioDirectoRequest request) {
         return ResponseEntity.status(201).body(usuarioService.crearDirecto(request));
+    }
+
+    @PatchMapping("/{usuarioId}")
+    public ResponseEntity<ActualizarUsuarioResponse> actualizarUsuario(
+            @PathVariable UUID usuarioId,
+            @RequestBody ActualizarUsuarioRequest request) {
+        return ResponseEntity.ok(usuarioService.actualizar(usuarioId, request));
     }
 }
