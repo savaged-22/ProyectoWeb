@@ -70,6 +70,17 @@ public class ProcesoController {
         return procesoService.editar(id, request);
     }
 
+    @PutMapping("/{id}/estado")
+    @Operation(
+            summary = "Cambiar estado de proceso",
+            description = "Cambia el estado del proceso y lo registra en el dashboard")
+    public org.springframework.http.ResponseEntity<ProcesoResponse> cambiarEstado(
+            @PathVariable UUID id,
+            @RequestBody java.util.Map<String, String> body) {
+        String nuevoEstado = body.get("estado");
+        return org.springframework.http.ResponseEntity.ok(procesoService.cambiarEstado(id, nuevoEstado));
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
