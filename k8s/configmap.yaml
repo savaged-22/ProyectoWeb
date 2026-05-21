@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lulo-config
+  namespace: proyectoweb
+data:
+  POSTGRES_DB: "lulo"
+  POSTGRES_HOST: "postgres.proyectoweb.svc.cluster.local"
+  POSTGRES_PORT: "5432"
+  SPRING_PROFILES_ACTIVE: "prod"
+  SPRING_DATASOURCE_URL: >-
+    jdbc:postgresql://postgres.proyectoweb.svc.cluster.local:5432/lulo

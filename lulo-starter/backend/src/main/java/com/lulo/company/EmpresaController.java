@@ -4,12 +4,14 @@ import com.lulo.company.dto.EmpresaDetalleResponse;
 import com.lulo.company.dto.EmpresaListItemResponse;
 import com.lulo.company.dto.RegistroEmpresaRequest;
 import com.lulo.company.dto.RegistroEmpresaResponse;
+import com.lulo.company.dto.EmpresaDetailResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import java.util.UUID;
 
 import java.util.List;
 
@@ -38,5 +40,8 @@ public class EmpresaController {
     @Operation(summary = "Obtener empresa", description = "Retorna los datos de una empresa con su lista de usuarios")
     public EmpresaDetalleResponse obtener(@PathVariable java.util.UUID id) {
         return empresaService.obtener(id);
+    @Operation(summary = "Obtener empresa por ID", description = "Retorna los detalles de la empresa especificada por ID")
+    public EmpresaDetailResponse obtenerPorId(@PathVariable UUID id) {
+        return empresaService.obtenerDetallePorId(id);
     }
 }
