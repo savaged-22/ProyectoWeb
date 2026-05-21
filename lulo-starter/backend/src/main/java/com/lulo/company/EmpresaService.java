@@ -1,7 +1,10 @@
 package com.lulo.company;
 
+import com.lulo.company.dto.EmpresaDetalleResponse;
+import com.lulo.company.dto.EmpresaListItemResponse;
 import com.lulo.company.dto.RegistroEmpresaRequest;
 import com.lulo.company.dto.RegistroEmpresaResponse;
+import com.lulo.company.dto.UsuarioBasicoResponse;
 import com.lulo.common.exception.ApiException;
 import com.lulo.pool.Pool;
 import com.lulo.pool.PoolRepository;
@@ -24,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class EmpresaService {
@@ -44,6 +48,23 @@ public class EmpresaService {
     @Autowired
     private UsuarioRolPoolRepository usuarioRolPoolRepository;
     @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
+    @Transactional(readOnly = true)
+    public List<EmpresaListItemResponse> listar() {
+        return empresaRepository.findAll().stream()
+                .map(empresa -> EmpresaListItemResponse.builder()
+                        .id(empresa.getId())
+                        .nombre(empresa.getNombre())
+                        .nit(empresa.getNit())
+                        .emailContacto(empresa.getEmailContacto())
+                        .createdAt(empresa.getCreatedAt())
+                        .totalUsuarios(usuarioRepository.findByEmpresaId(empresa.getId()).size())
+                        .totalProcesos(0L)
+                        .totalPools(poolRepository.findByEmpresaIdOrderByNombreAsc(empresa.getId()).size())
+                        .build())
+                .toList();
+    }
     private ProcesoRepository        procesoRepository;
 
     @Transactional
@@ -73,8 +94,7 @@ public class EmpresaService {
         Usuario admin = new Usuario();
         admin.setEmpresa(empresa);
         admin.setEmail(request.getEmailAdmin());
-        // TODO: reemplazar por BCrypt cuando se implemente la capa de seguridad (HU-Auth)
-        admin.setPasswordHash(request.getPassword());
+        admin.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         admin.setEstado("activo");
         admin = usuarioRepository.save(admin);
 
@@ -115,11 +135,33 @@ public class EmpresaService {
     }
 
     @Transactional(readOnly = true)
-    public EmpresaDetailResponse obtenerDetallePorId(UUID id) {
+    public EmpresaDetalleResponse obtener(java.util.UUID id) {
         Empresa empresa = empresaRepository.findById(id)
                 .orElseThrow(() -> new ApiException("Empresa no encontrada", HttpStatus.NOT_FOUND));
 
         List<Usuario> usuarios = usuarioRepository.findByEmpresaId(id);
+
+        List<UsuarioBasicoResponse> usuariosDto = usuarios.stream().map(u -> {
+            List<UsuarioRolPool> roles = usuarioRolPoolRepository.findByUsuarioIdAndEmpresaId(u.getId(), id);
+            String rolPrincipal = roles.stream()
+                    .map(urp -> urp.getRolPool().getNombre())
+                    .findFirst()
+                    .orElse("Sin rol");
+            return UsuarioBasicoResponse.builder()
+                    .id(u.getId())
+                    .email(u.getEmail())
+                    .estado(u.getEstado())
+                    .rolPrincipal(rolPrincipal)
+                    .createdAt(u.getCreatedAt())
+                    .build();
+        }).collect(Collectors.toList());
+
+        long totalPools = poolRepository.findByEmpresaIdOrderByNombreAsc(id).size();
+        long totalRoles = poolRepository.findByEmpresaIdOrderByNombreAsc(id).stream()
+                .mapToLong(p -> rolPoolRepository.findByPoolId(p.getId()).size())
+                .sum();
+
+        return EmpresaDetalleResponse.builder()
         List<Pool> pools = poolRepository.findByEmpresaIdOrderByNombreAsc(id);
 
         long totalRolesPool = pools.stream()
@@ -146,6 +188,13 @@ public class EmpresaService {
                 .nit(empresa.getNit())
                 .emailContacto(empresa.getEmailContacto())
                 .createdAt(empresa.getCreatedAt())
+                .totalUsuarios(usuariosDto.size())
+                .totalProcesos(0L)
+                .totalPools(totalPools)
+                .totalRolesPool(totalRoles)
+                .usuarios(usuariosDto)
+                .build();
+    }
                 .totalUsuarios(usuarios.size())
                 .totalPools(pools.size())
                 .totalRolesPool(totalRolesPool)

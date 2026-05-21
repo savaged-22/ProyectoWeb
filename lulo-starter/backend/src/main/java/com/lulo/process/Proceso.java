@@ -50,6 +50,9 @@ public class Proceso {
     @Column(nullable = false)
     private boolean activo = true;
 
+    @Column(name = "es_plantilla", nullable = false)
+    private boolean esPlantilla = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

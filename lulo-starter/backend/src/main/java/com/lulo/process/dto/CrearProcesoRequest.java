@@ -32,4 +32,8 @@ public class CrearProcesoRequest {
 
     @Pattern(regexp = "borrador|publicado", message = "El estado debe ser 'borrador' o 'publicado'")
     private String estado = "borrador";
+
+    private Boolean esPlantilla;
+
+    private UUID disenoBaseId;
 }

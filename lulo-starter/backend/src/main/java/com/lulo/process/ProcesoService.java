@@ -46,6 +46,7 @@ public class ProcesoService {
     private final DiagramService     diagramService;
     private final PoolPermissionService poolPermissionService;
     private final ProcesoCompartidoService procesoCompartidoService;
+    private final com.lulo.execution.CasoLogRepository casoLogRepository;
 
     // ── Listar con filtros ────────────────────────────────────────────────────
 
@@ -109,6 +110,7 @@ public class ProcesoService {
                 .categoria(proceso.getCategoria())
                 .estado(proceso.getEstado())
                 .activo(proceso.isActivo())
+                .esPlantilla(proceso.isEsPlantilla())
                 .createdAt(proceso.getCreatedAt())
                 .updatedAt(proceso.getUpdatedAt())
                 .lanes(diagramService.getLanes(procesoId))
@@ -154,7 +156,20 @@ public class ProcesoService {
         proceso.setCategoria(request.getCategoria());
         proceso.setEstado(estado);
         proceso.setActivo(true);
+        proceso.setEsPlantilla(Boolean.TRUE.equals(request.getEsPlantilla()));
         proceso = procesoRepository.save(proceso);
+
+        if (request.getDisenoBaseId() != null) {
+            diagramService.clonarDiagrama(request.getDisenoBaseId(), proceso.getId(), creadoPor);
+        }
+
+        com.lulo.execution.CasoLog log = new com.lulo.execution.CasoLog();
+        log.setNivel("INFO");
+        log.setMensaje("Proceso creado: " + proceso.getNombre());
+        log.setEstado(estado.toUpperCase());
+        log.setProceso(proceso);
+        log.setCaso(null);
+        casoLogRepository.save(log);
 
         return toResponse(proceso);
     }
@@ -177,6 +192,8 @@ public class ProcesoService {
         // ── Snapshot antes del cambio ─────────────────────────────────────────
         Map<String, Object> antes = snapshot(proceso);
 
+        String estadoAnterior = proceso.getEstado();
+
         // ── Aplicar solo los campos presentes en el request ───────────────────
         if (request.getNombre()      != null) proceso.setNombre(request.getNombre());
         if (request.getDescripcion() != null) proceso.setDescripcion(request.getDescripcion());
@@ -186,6 +203,19 @@ public class ProcesoService {
         // saveAndFlush fuerza el flush inmediato para que @PreUpdate dispare
         // antes de construir el response (evita updatedAt null en la respuesta)
         proceso = procesoRepository.saveAndFlush(proceso);
+
+        if (request.getEstado() != null && !request.getEstado().equalsIgnoreCase(estadoAnterior)) {
+            String nuevoEstado = proceso.getEstado().toUpperCase();
+            String nivel = (nuevoEstado.equals("INACTIVO") || nuevoEstado.equals("ARCHIVADO")) ? "WARN" : "INFO";
+            
+            com.lulo.execution.CasoLog log = new com.lulo.execution.CasoLog();
+            log.setNivel(nivel);
+            log.setMensaje("Estado cambiado: " + estadoAnterior + " -> " + nuevoEstado);
+            log.setEstado(nuevoEstado);
+            log.setProceso(proceso);
+            log.setCaso(null);
+            casoLogRepository.save(log);
+        }
 
         // ── Registrar historial ───────────────────────────────────────────────
         auditService.registrar(
@@ -197,6 +227,26 @@ public class ProcesoService {
                 antes,
                 snapshot(proceso)
         );
+
+        return toResponse(proceso);
+    }
+
+    @Transactional
+    public ProcesoResponse cambiarEstado(UUID id, String nuevoEstado) {
+        Proceso proceso = procesoRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Proceso no encontrado"));
+        
+        String estadoAnterior = proceso.getEstado();
+        proceso.setEstado(nuevoEstado.toUpperCase());
+        procesoRepository.save(proceso);
+
+        // Log automático al dashboard
+        com.lulo.execution.CasoLog log = new com.lulo.execution.CasoLog();
+        log.setNivel(nuevoEstado.equals("ARCHIVADO") ? "WARN" : "INFO");
+        log.setMensaje("Estado cambiado: " + estadoAnterior + " -> " + nuevoEstado);
+        log.setEstado(nuevoEstado);
+        log.setProceso(proceso);
+        casoLogRepository.save(log);
 
         return toResponse(proceso);
     }
@@ -293,6 +343,7 @@ public class ProcesoService {
                 .categoria(p.getCategoria())
                 .estado(p.getEstado())
                 .activo(p.isActivo())
+                .esPlantilla(p.isEsPlantilla())
                 .createdAt(p.getCreatedAt())
                 .updatedAt(p.getUpdatedAt())
                 .build();

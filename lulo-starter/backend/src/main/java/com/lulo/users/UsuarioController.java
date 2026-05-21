@@ -1,9 +1,9 @@
 package com.lulo.users;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -11,18 +11,28 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/users")
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class UsuarioController {
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate  jdbcTemplate;
+    private final UsuarioService usuarioService;
 
     @GetMapping
     public ResponseEntity<?> getAllUsers() {
         try {
-            List<Map<String, Object>> usuarios = jdbcTemplate.queryForList("SELECT id, email, estado, empresa_id FROM usuario");
+            List<Map<String, Object>> usuarios = jdbcTemplate.queryForList(
+                    "SELECT id, email, estado, empresa_id FROM usuario");
             return ResponseEntity.ok(usuarios);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error: " + e.getMessage() + "\nCause: " + (e.getCause() != null ? e.getCause().getMessage() : ""));
+            return ResponseEntity.status(500)
+                    .body("Error: " + e.getMessage() + "\nCause: " +
+                          (e.getCause() != null ? e.getCause().getMessage() : ""));
         }
+    }
+
+    @PostMapping
+    public ResponseEntity<CrearUsuarioDirectoResponse> crearUsuario(
+            @RequestBody CrearUsuarioDirectoRequest request) {
+        return ResponseEntity.status(201).body(usuarioService.crearDirecto(request));
     }
 }

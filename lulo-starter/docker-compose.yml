@@ -39,18 +39,6 @@ services:
       retries: 6
       start_period: 40s
 
-  # ── Frontend Angular servido con SSR (Node.js) ────────────────────────────
-  frontend:
-    build:
-      context: ../../proyectoWeb_Front/frontend_final
-      dockerfile: Dockerfile
-    ports:
-      - "4201:4000"
-    depends_on:
-      - backend
-    networks:
-      - lulo-net
-
   # ── PostgreSQL exclusivo para SonarQube (no comparte la DB de la app) ────
   sonar-db:
     profiles: ["sonar"]

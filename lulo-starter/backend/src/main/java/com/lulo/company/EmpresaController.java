@@ -1,5 +1,7 @@
 package com.lulo.company;
 
+import com.lulo.company.dto.EmpresaDetalleResponse;
+import com.lulo.company.dto.EmpresaListItemResponse;
 import com.lulo.company.dto.RegistroEmpresaRequest;
 import com.lulo.company.dto.RegistroEmpresaResponse;
 import com.lulo.company.dto.EmpresaDetailResponse;
@@ -11,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/empresas")
 @RequiredArgsConstructor
@@ -18,6 +22,12 @@ import java.util.UUID;
 public class EmpresaController {
 
     private final EmpresaService empresaService;
+
+    @GetMapping
+    @Operation(summary = "Listar empresas", description = "Retorna todas las empresas registradas")
+    public List<EmpresaListItemResponse> listar() {
+        return empresaService.listar();
+    }
 
     @PostMapping("/registro")
     @ResponseStatus(HttpStatus.CREATED)
@@ -27,6 +37,9 @@ public class EmpresaController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Obtener empresa", description = "Retorna los datos de una empresa con su lista de usuarios")
+    public EmpresaDetalleResponse obtener(@PathVariable java.util.UUID id) {
+        return empresaService.obtener(id);
     @Operation(summary = "Obtener empresa por ID", description = "Retorna los detalles de la empresa especificada por ID")
     public EmpresaDetailResponse obtenerPorId(@PathVariable UUID id) {
         return empresaService.obtenerDetallePorId(id);

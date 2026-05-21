@@ -28,6 +28,7 @@ public class ProcesoDetalleResponse {
     private String        categoria;
     private String        estado;
     private boolean       activo;
+    private boolean       esPlantilla;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
