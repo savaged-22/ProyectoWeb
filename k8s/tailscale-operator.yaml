@@ -1,0 +1,22 @@
+# El Tailscale Operator convierte este Service en un nodo
+# de tu Tailnet con hostname "lulo-app".
+# Acceso desde cualquier dispositivo del Tailnet:
+#   http://lulo-app/          → frontend Angular
+#   http://lulo-app/api/...   → backend Spring Boot
+apiVersion: v1
+kind: Service
+metadata:
+  name: lulo-tailscale
+  namespace: kube-system
+  annotations:
+    tailscale.com/hostname: "lulo-app"
+spec:
+  type: LoadBalancer
+  loadBalancerClass: tailscale
+  # Apunta al Traefik que K3s instaló automáticamente
+  selector:
+    app.kubernetes.io/name: traefik
+  ports:
+  - name: http
+    port: 80
+    targetPort: web

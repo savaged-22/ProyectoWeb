@@ -1,0 +1,29 @@
+# K3s trae Traefik por defecto como Ingress Controller.
+# Este Ingress replica exactamente el comportamiento del Ingress
+# de producción (grupo12.inphotech.co):
+#   /      → frontend
+#   /api/* → backend (con strip del prefijo /api)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: lulo-ingress
+  namespace: proyectoweb
+spec:
+  ingressClassName: traefik
+  rules:
+  - http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: backend
+            port:
+              number: 8080
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend
+            port:
+              number: 80

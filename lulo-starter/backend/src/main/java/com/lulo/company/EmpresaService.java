@@ -14,6 +14,9 @@ import com.lulo.rbac.UsuarioRolPoolId;
 import com.lulo.rbac.UsuarioRolPoolRepository;
 import com.lulo.users.Usuario;
 import com.lulo.users.UsuarioRepository;
+import com.lulo.process.ProcesoRepository;
+import com.lulo.company.dto.EmpresaDetailResponse;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -40,6 +43,8 @@ public class EmpresaService {
     private RolPoolRepository        rolPoolRepository;
     @Autowired
     private UsuarioRolPoolRepository usuarioRolPoolRepository;
+    @Autowired
+    private ProcesoRepository        procesoRepository;
 
     @Transactional
     public RegistroEmpresaResponse registrar(RegistroEmpresaRequest request) {
@@ -107,5 +112,53 @@ public class EmpresaService {
                 .poolDefault(pool.getNombre())
                 .mensaje("Empresa registrada exitosamente")
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public EmpresaDetailResponse obtenerDetallePorId(UUID id) {
+        Empresa empresa = empresaRepository.findById(id)
+                .orElseThrow(() -> new ApiException("Empresa no encontrada", HttpStatus.NOT_FOUND));
+
+        List<Usuario> usuarios = usuarioRepository.findByEmpresaId(id);
+        List<Pool> pools = poolRepository.findByEmpresaIdOrderByNombreAsc(id);
+
+        long totalRolesPool = pools.stream()
+                .mapToLong(p -> rolPoolRepository.findByPoolId(p.getId()).size())
+                .sum();
+
+        long totalProcesos = pools.stream()
+                .mapToLong(p -> procesoRepository.findByPoolIdAndActivoTrue(p.getId()).size())
+                .sum();
+
+        List<EmpresaDetailResponse.UsuarioBasicoResponse> usuarioResponses = usuarios.stream()
+                .map(u -> EmpresaDetailResponse.UsuarioBasicoResponse.builder()
+                        .id(u.getId())
+                        .email(u.getEmail())
+                        .estado(u.getEstado())
+                        .rolPrincipal(obtenerRolPrincipal(u.getId(), id))
+                        .createdAt(u.getCreatedAt())
+                        .build())
+                .toList();
+
+        return EmpresaDetailResponse.builder()
+                .id(empresa.getId())
+                .nombre(empresa.getNombre())
+                .nit(empresa.getNit())
+                .emailContacto(empresa.getEmailContacto())
+                .createdAt(empresa.getCreatedAt())
+                .totalUsuarios(usuarios.size())
+                .totalPools(pools.size())
+                .totalRolesPool(totalRolesPool)
+                .totalProcesos(totalProcesos)
+                .usuarios(usuarioResponses)
+                .build();
+    }
+
+    private String obtenerRolPrincipal(UUID usuarioId, UUID empresaId) {
+        List<UsuarioRolPool> asignaciones = usuarioRolPoolRepository.findByUsuarioIdAndEmpresaId(usuarioId, empresaId);
+        if (asignaciones.isEmpty()) {
+            return "Administrador";
+        }
+        return asignaciones.get(0).getRolPool().getNombre();
     }
 }

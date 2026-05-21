@@ -1,0 +1,126 @@
+# Levantar con: kubectl apply -f k8s/optional/sonarqube.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sonarqube
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sonar-postgres
+  namespace: sonarqube
+spec:
+  serviceName: sonar-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sonar-postgres
+  template:
+    metadata:
+      labels:
+        app: sonar-postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:16-alpine
+        env:
+        - name: POSTGRES_USER
+          value: sonar
+        - name: POSTGRES_PASSWORD
+          value: sonar
+        - name: POSTGRES_DB
+          value: sonarqube
+        volumeMounts:
+        - name: sonar-db-data
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+      name: sonar-db-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sonar-postgres
+  namespace: sonarqube
+spec:
+  type: ClusterIP
+  selector:
+    app: sonar-postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sonarqube
+  namespace: sonarqube
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sonarqube
+  template:
+    metadata:
+      labels:
+        app: sonarqube
+    spec:
+      initContainers:
+      # SonarQube requiere vm.max_map_count alto en el host
+      - name: init-sysctl
+        image: busybox:1.36
+        command: ['sysctl', '-w', 'vm.max_map_count=524288']
+        securityContext:
+          privileged: true
+      containers:
+      - name: sonarqube
+        image: sonarqube:community
+        ports:
+        - containerPort: 9000
+        env:
+        - name: SONAR_JDBC_URL
+          value: jdbc:postgresql://sonar-postgres.sonarqube.svc.cluster.local:5432/sonarqube
+        - name: SONAR_JDBC_USERNAME
+          value: sonar
+        - name: SONAR_JDBC_PASSWORD
+          value: sonar
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+        volumeMounts:
+        - name: sonar-data
+          mountPath: /opt/sonarqube/data
+        - name: sonar-logs
+          mountPath: /opt/sonarqube/logs
+      volumes:
+      - name: sonar-data
+        emptyDir: {}
+      - name: sonar-logs
+        emptyDir: {}
+---
+# Exponer SonarQube en el Tailnet en puerto 9000
+apiVersion: v1
+kind: Service
+metadata:
+  name: sonarqube-tailscale
+  namespace: sonarqube
+  annotations:
+    tailscale.com/hostname: "lulo-sonar"
+spec:
+  type: LoadBalancer
+  loadBalancerClass: tailscale
+  selector:
+    app: sonarqube
+  ports:
+  - port: 9000
+    targetPort: 9000
